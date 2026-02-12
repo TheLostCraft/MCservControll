@@ -2,8 +2,8 @@
 Is a discord bot to controll minecraft servers via discord
 
 # Preparation
-■ Python or Node.js
+1. Python or Node.js
    - Node.js
-□ learn Node.js
-□ think about the structure
-□ make base code
+2. learn Node.js
+3. think about the structure
+4. make base code
