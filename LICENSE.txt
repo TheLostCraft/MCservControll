@@ -1,4 +1,4 @@
-LICENSE – Private Custom Discord Bot (Starter)
+LICENSE – Discord Bot
 
 This Discord bot was created as a private hobby project.
 
