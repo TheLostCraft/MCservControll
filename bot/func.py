@@ -12,4 +12,5 @@ class GuildsData:
     def read(ctx, typ):
         if(typ == "name"):
             with shelve.open('Guilds_Data') as db:
-                ergebnis = db.get(ctx.guild.id, "name")
+                content = db.get(ctx.guild.id, "name")
+        return content
