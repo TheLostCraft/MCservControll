@@ -10,3 +10,4 @@ If you have any ideas for the project, let me know.
      1. discord bot interface 
      2. discord command processing
      3. server controll 
+     
