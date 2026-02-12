@@ -1,6 +1,6 @@
 # MCservControll
 A open-source discord bot to controll minecraft servers via discord
-
+If you have any ideas for the project, let me know.
 # Preparation
 ~~1. Python or Node.js~~
    - Node.js (better performance)
