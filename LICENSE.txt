@@ -3,7 +3,7 @@ LICENSE – Discord Bot
 This Discord bot was created as a private hobby project.
 
 1. Usage
-The bot may only be used privately on ONE Discord server.
+The bot may only be used privately on Discord server.
 Commercial use is not allowed.
 
 2. Distribution
