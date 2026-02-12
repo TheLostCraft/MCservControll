@@ -1,6 +1,9 @@
 import discord
 from discord.ext import commands
 
+from func import 
+import
+
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='>', intents=intents)
@@ -11,6 +14,6 @@ async def start(ctx):
 
 
 # read token and run with it
-with shelve.open('Discord.Bot_token') as db:
-    token = db.get("token")
+
 bot.run(token)
+
