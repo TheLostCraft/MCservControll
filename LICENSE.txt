@@ -1,0 +1,42 @@
+LICENSE – Private Custom Discord Bot (Starter)
+
+This Discord bot was created as a private hobby project.
+
+1. Usage
+The bot may only be used privately on ONE Discord server.
+Commercial use is not allowed.
+
+2. Distribution
+Redistribution, sale, or publication of the bot (or parts of its code) is not allowed.
+
+3. Modifications
+The user may modify the code for personal private use only.
+
+4. Support
+There is no obligation to provide support, updates, or bug fixes.
+Support may be provided voluntarily and by agreement.
+
+5. Warranty
+The bot is provided "as is".
+No guarantee is given regarding functionality, availability, or error-free operation.
+
+6. Liability
+The creator assumes no liability for direct or indirect damages, including but not limited to:
+
+- Data loss on Discord or the Minecraft server  
+- Server downtime or interruptions  
+- Bot malfunctions  
+- Damage to files, programs, or hardware  
+- Any other financial or other losses resulting from using the bot  
+- Penalties, warnings, or sanctions from Discord or other platforms caused by using the bot  
+
+The user uses the bot **at their own risk**.  
+The creator is **not responsible for any actions taken by the user with the bot**, 
+including misuse, accidental deletion, or incorrect configuration.
+
+7. Price
+The price is individually agreed upon and may vary depending on features.
+A fixed price is not part of this license.
+
+8. Agreement
+By using the bot, the user agrees to these terms.
