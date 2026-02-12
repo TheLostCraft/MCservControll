@@ -9,4 +9,8 @@ bot = commands.Bot(command_prefix='>', intents=intents)
 async def start(ctx):
     print("Start")
 
-bot.run('token')
+
+# read token and run with it
+with shelve.open('Discord.Bot_token') as db:
+    token = db.get("token")
+bot.run(token)
