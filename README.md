@@ -1,5 +1,5 @@
 # MCservControll
-Is a discord bot to controll minecraft servers via discord
+A discord bot to controll minecraft servers via discord
 
 # Preparation
 ~~1. Python or Node.js~~
