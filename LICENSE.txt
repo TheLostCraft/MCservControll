@@ -1,4 +1,4 @@
-LICENSE – Discord Bot
+LICENSE – MCservControll 
 
 This Discord bot was created as a private hobby project.
 
