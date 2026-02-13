@@ -20,7 +20,7 @@ class Data: # save and read data
         return content
     
 
-class thinking:
+class processing:
     def getRolePermissonsLevel(ctx):
         Role_Levels = Data.read(ctx, "PermissionRoleLevels")
         Role_IDs = Data.read(ctx, "PermissionRoleIDs")
@@ -47,7 +47,7 @@ class thinking:
         return PermissionLevel
 
     def start(ctx):
-        if(Data.read(ctx, "PermissionLevels")[0] <= thinking.getRolePermissonsLevel):
+        if(Data.read(ctx, "PermissionLevels")[0] <= processing.getRolePermissonsLevel(ctx)):
             if(Data.read(ctx, "SoftwareTyp") == "Pterodactyl"):
                 Pterodactyl.start
 
@@ -55,3 +55,4 @@ class thinking:
 class Pterodactyl:
     def start(ctx):
         print()
+
