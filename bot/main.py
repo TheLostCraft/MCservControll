@@ -14,6 +14,6 @@ async def start(ctx):
 
 
 # read the token of your discord bot and use it
-with open("token.txt", "r") as file: # token.txt content = discord bot token
+with open("token.txt", "r") as file: # token.txt content = your discord bot token
     token = int(file.read())
 bot.run(token)
