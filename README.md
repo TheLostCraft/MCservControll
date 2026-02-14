@@ -12,3 +12,7 @@ If you have any ideas for the project, let me know.
      2. discord command processing
      3. server controll 
      
+Progress:
+1. Layer -- 
+2. Layer --
+3. Layer --
