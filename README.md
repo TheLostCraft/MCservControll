@@ -8,9 +8,9 @@ If you have any ideas for the project, let me know.
 ~~2. think about the structure of the code~~
 
    - layers 
-     1. discord bot interface 
-     2. discord command processing
-     3. server controll 
+   1. discord bot interface 
+   2. discord command processing
+   3. server controll 
      
 Progress:
 1. Layer -- ■■□□□□□□□□
