@@ -21,6 +21,6 @@ Code Progress:
 
    □□□□□□□□□□ AMP
 
-   □□□□□□□□□□ Multicraft
+   ■■■■■■■■■■ Multicraft
 
 Tests: 0
