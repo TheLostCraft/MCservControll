@@ -5,8 +5,8 @@ import requests
 class Data: # save and read data
 
     # TYPs :
-    # SoftwareTyp          | pterodactyl
-    # API_Login            | Pterodactly = [Panel_URL, Server_ID, API_key]
+    # SoftwareTyp          | pterodactyl, multicraft
+    # API_Login            | Pterodactly = [Panel_URL, Server_ID, API_key], multicraft = [API_URL, Server_ID, API_key]
     # PermissionLevels     | Wo can do what. [start, stop, restart]
     # PermissionRoleLevels |
     # PermissionRoleIDs    |
@@ -57,8 +57,9 @@ class processing:
     @staticmethod
     async def start(ctx):
         if(Data.read(ctx, "PermissionLevels")[0] <= processing.getRolePermissonsLevel(ctx)):
+            
+            # Pterodactyl
             if(Data.read(ctx, "SoftwareTyp") == "pterodactyl"):
-                
                 if(Pterodactyl.status(ctx) == "offline"):
                     Pterodactyl.power_action(ctx, "start")
                     await ctx.send("The server starts")
@@ -72,10 +73,29 @@ class processing:
                 else:
                     (f"Something went wrong. Have you already set up the system? \nError: {Pterodactyl.status(ctx)}")
 
+            # Multicraft
+            elif(Data.read(ctx, "SoftwareTyp") == "multicraft"):
+                if(Multicraft.status(ctx) == "offline" or Multicraft.status(ctx) == "crashed"):
+                    Multicraft.power_action(ctx, "start")
+                    await ctx.send("The server starts")
+
+                elif(Multicraft.status(ctx) == "starting" or Multicraft.status(ctx) == "running" or Multicraft.status(ctx) == "restarting"):
+                    await ctx.send(f"The is server already {Multicraft.status(ctx)}")
+
+                elif(Multicraft.status(ctx) == "stopping"):
+                    await ctx.send("Let it stop before you start it")
+
+                elif(Multicraft.status(ctx) == "unknown"):
+                    Multicraft.power_action(ctx, "start")
+                    await ctx.send("The server status is unknown. I try to start the server but I can't guarantee anything")
+
+
 
     @staticmethod
     async def stop(ctx):
         if(Data.read(ctx, "PermissionLevels")[1] <= processing.getRolePermissonsLevel(ctx)):
+            
+            # Pterodactyl
             if(Data.read(ctx, "SoftwareTyp") == "pterodactyl"):
                 
                 if(Pterodactyl.status(ctx) == "running"):
@@ -91,10 +111,28 @@ class processing:
                 else:
                     (f"Something went wrong. Have you already set up the system? \nError: {Pterodactyl.status(ctx)}")
 
+            # Multicraft
+            elif(Data.read(ctx, "SoftwareTyp") == "multicraft"):
+                if(Multicraft.status(ctx) == "running"):
+                    Multicraft.power_action(ctx, "stop")
+                    await ctx.send("The server stops")
+
+                elif(Multicraft.status(ctx) == "stopping" or Multicraft.status(ctx) == "crashed" or Multicraft.status(ctx) == "offline"):
+                    await ctx.send(f"The is server already {Multicraft.status(ctx)}")
+
+                elif(Multicraft.status(ctx) == "starting" or Multicraft.status(ctx) == "restarting"):
+                    await ctx.send(f"It is {Pterodactyl.status(ctx)}, let it do that before you stop it")
+
+                elif(Multicraft.status(ctx) == "unknown"):
+                    Multicraft.power_action(ctx, "stop")
+                    await ctx.send("The server status is unknown. I try to stop the server but I can't guarantee anything")
+
 
     @staticmethod
     async def restart(ctx):
         if(Data.read(ctx, "PermissionLevels")[1] <= processing.getRolePermissonsLevel(ctx)):
+            
+            # Pterodactyl
             if(Data.read(ctx, "SoftwareTyp") == "pterodactyl"):
                 
                 if(Pterodactyl.status(ctx) == "running"):
@@ -105,12 +143,31 @@ class processing:
                     await ctx.send(f"The is server already {Pterodactyl.status(ctx)}")
                 
                 elif(Pterodactyl.status(ctx) == "starting" or Pterodactyl.status(ctx) == "stopping"):
-                    await ctx.send(f"It is {Pterodactyl.status(ctx)}, let it do that  before you restart it")
+                    await ctx.send(f"It is {Pterodactyl.status(ctx)}, let it do that before you restart it")
 
                 else:
                     (f"Something went wrong. Have you already set up the system? \nError: {Pterodactyl.status(ctx)}")
-                
 
+
+            # Multicraft
+            elif(Data.read(ctx, "SoftwareTyp") == "multicraft"):
+                if(Multicraft.status(ctx) == "running"):
+                    Multicraft.power_action(ctx, "restart")
+                    await ctx.send("The server restarts")
+
+                elif(Multicraft.status(ctx) == "offline" or Multicraft.status(ctx) == "crashed"):
+                    await ctx.send(f"The server can't restart when its {Multicraft.status(ctx)}")
+
+                elif(Multicraft.status(ctx) == "restarting"):
+                    await ctx.send(f"The is server already restarting")
+
+                elif(Multicraft.status(ctx) == "starting" or Multicraft.status(ctx) == "stopping"):
+                    await ctx.send(f"It is {Pterodactyl.status(ctx)}, let it do that before you stop it")
+
+                elif(Multicraft.status(ctx) == "unknown"):
+                    Multicraft.power_action(ctx, "restart")
+                    await ctx.send("The server status is unknown. I try to restart the server but I can't guarantee anything")
+                
 
 class Pterodactyl:
     @staticmethod
@@ -152,3 +209,34 @@ class Pterodactyl:
             headers=HEADERS
         ).json()
         return Server_Ressources["attributes"]["current_state"]
+    
+
+class Multicraft:
+    def power_action(ctx, action: str):
+
+        API_Login = Data.read(ctx, "API_Login")
+        API_URL = API_Login[0]
+        Server_ID = API_Login[1]
+        API_key = API_Login[2]
+
+        response = requests.post(API_URL, data={
+            'action': action,
+            'server': Server_ID,
+            'apikey': API_key
+        })
+        return response.json()
+    
+
+    def status(ctx): # return = "running", "offline", "starting", "stopping", "restarting", "crashed", "unknown"
+        API_Login = Data.read(ctx, "API_Login")
+        API_URL = API_Login[0]
+        Server_ID = API_Login[1]
+        API_key = API_Login[2]
+    
+        response = requests.post(API_URL, data={
+            'action': 'status',
+            'server': Server_ID,
+            'apikey': API_key
+        })
+        result = response.json()
+        return result.get('status', 'unbekannt')
