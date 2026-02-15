@@ -15,10 +15,12 @@ If you have any ideas for the project, let me know.
 Code Progress:
 1. Layer -- ■■■■■■□□□□
 2. Layer -- ■■■■■■■■□□
-3. Layer -- ■■■■■■■■■■ Pterodactyl
+3. Layer --
 
-            □□□□□□□□□□ AMP
+   ■■■■■■■■■■ Pterodactyl
 
-            □□□□□□□□□□ Multicraft
+   □□□□□□□□□□ AMP
+
+   □□□□□□□□□□ Multicraft
 
 Tests: 0
