@@ -66,6 +66,14 @@ async def setup(ctx):
 @bot.command()
 async def start(ctx):
     await processing.start(ctx)
+
+@bot.command()
+async def start(ctx):
+    await processing.stop(ctx)
+
+@bot.command()
+async def start(ctx):
+    await processing.restart(ctx)
     
 
 # read the token of your discord bot and use it
