@@ -64,10 +64,48 @@ class processing:
                     await ctx.send("The server starts")
                 
                 elif(Pterodactyl.status(ctx) == "running" or Pterodactyl.status(ctx) == "starting"):
-                    await ctx.send(f"The is already {Pterodactyl.status(ctx)}")
+                    await ctx.send(f"The is server already {Pterodactyl.status(ctx)}")
                 
                 elif(Pterodactyl.status(ctx) == "stopping"):
                     await ctx.send("Let it stop before you start it")
+
+                else:
+                    (f"Something went wrong. Have you already set up the system? \nError: {Pterodactyl.status(ctx)}")
+
+
+    @staticmethod
+    async def stop(ctx):
+        if(Data.read(ctx, "PermissionLevels")[1] <= processing.getRolePermissonsLevel(ctx)):
+            if(Data.read(ctx, "SoftwareTyp") == "pterodactyl"):
+                
+                if(Pterodactyl.status(ctx) == "running"):
+                    Pterodactyl.power_action(ctx, "stop")
+                    await ctx.send("The server stops")
+                
+                elif(Pterodactyl.status(ctx) == "offline" or Pterodactyl.status(ctx) == "stopping"):
+                    await ctx.send(f"The is server already {Pterodactyl.status(ctx)}")
+                
+                elif(Pterodactyl.status(ctx) == "starting"):
+                    await ctx.send("Let it start before you stop it")
+
+                else:
+                    (f"Something went wrong. Have you already set up the system? \nError: {Pterodactyl.status(ctx)}")
+
+
+    @staticmethod
+    async def restart(ctx):
+        if(Data.read(ctx, "PermissionLevels")[1] <= processing.getRolePermissonsLevel(ctx)):
+            if(Data.read(ctx, "SoftwareTyp") == "pterodactyl"):
+                
+                if(Pterodactyl.status(ctx) == "running"):
+                    Pterodactyl.power_action(ctx, "restart")
+                    await ctx.send("The server restarts")
+                
+                elif(Pterodactyl.status(ctx) == "offline"):
+                    await ctx.send(f"The is server already {Pterodactyl.status(ctx)}")
+                
+                elif(Pterodactyl.status(ctx) == "starting" or Pterodactyl.status(ctx) == "stopping"):
+                    await ctx.send(f"It is {Pterodactyl.status(ctx)}, let it do that  before you restart it")
 
                 else:
                     (f"Something went wrong. Have you already set up the system? \nError: {Pterodactyl.status(ctx)}")
