@@ -13,6 +13,6 @@ If you have any ideas for the project, let me know.
    3. server controll 
      
 Code Progress:
-1. Layer -- ■■□□□□□□□□
-2. Layer -- ■■■■□□□□□□
-3. Layer -- □□□□□□□□□□
+1. Layer -- ■■■□□□□□□□
+2. Layer -- ■■■■■□□□□□
+3. Layer -- ■■□□□□□□□□
