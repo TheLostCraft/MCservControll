@@ -43,6 +43,21 @@ async def setup(ctx):
 
             API_Login = [Panel_URL, Server_ID, API_key]
 
+        if(SoftwareTyp.lower() == "multicraft"):
+            await ctx.send("What is your API url")
+            msg = await bot.wait_for("message", timeout=1800, check=check)
+            API_URL = msg.content
+
+            await ctx.send("What is the Server ID")
+            msg = await bot.wait_for("message", timeout=1800, check=check)
+            Server_ID = msg.content
+
+            await ctx.send("What is the API Key")
+            msg = await bot.wait_for("message", timeout=1800, check=check)
+            API_key = msg.content
+
+            API_Login = [API_URL, Server_ID, API_key]
+
         else:
             await ctx.send("Your softwart does not exist in our database, I can only do Pterodactyl.\nProcess aborted")
             return
@@ -63,15 +78,14 @@ async def setup(ctx):
         return
 
 
+# start / stop / restart
 @bot.command()
 async def start(ctx):
     await processing.start(ctx)
 
-@bot.command()
 async def start(ctx):
     await processing.stop(ctx)
 
-@bot.command()
 async def start(ctx):
     await processing.restart(ctx)
     
