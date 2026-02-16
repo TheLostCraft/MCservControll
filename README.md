@@ -19,7 +19,7 @@ Code Progress:
 
    ■■■■■■■■■■ Pterodactyl
 
-   ■□□□□□□□□□ AMP
+   ■■■■■■■■■■ AMP
 
    ■■■■■■■■■■ Multicraft
 
