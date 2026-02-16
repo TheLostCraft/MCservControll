@@ -43,7 +43,22 @@ async def setup(ctx):
 
             API_Login = [Panel_URL, Server_ID, API_key]
 
-        if(SoftwareTyp.lower() == "multicraft"):
+        elif(SoftwareTyp.lower() == "multicraft"):
+            await ctx.send("What is your API url")
+            msg = await bot.wait_for("message", timeout=1800, check=check)
+            API_URL = msg.content
+
+            await ctx.send("What is the Server ID")
+            msg = await bot.wait_for("message", timeout=1800, check=check)
+            Server_ID = msg.content
+
+            await ctx.send("What is the API Key")
+            msg = await bot.wait_for("message", timeout=1800, check=check)
+            API_key = msg.content
+
+            API_Login = [API_URL, Server_ID, API_key]
+
+        elif(SoftwareTyp.lower() == "amp"):
             await ctx.send("What is your API url")
             msg = await bot.wait_for("message", timeout=1800, check=check)
             API_URL = msg.content
