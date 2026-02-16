@@ -5,8 +5,8 @@ import requests
 class Data: # save and read data
 
     # TYPs :
-    # SoftwareTyp          | pterodactyl, multicraft
-    # API_Login            | Pterodactly = [Panel_URL, Server_ID, API_key], multicraft = [API_URL, Server_ID, API_key]
+    # SoftwareTyp          | pterodactyl, multicraft, amp
+    # API_Login            | Pterodactly = [Panel_URL, Server_ID, API_key]; multicraft, AMP = [API_URL, Server_ID, API_key]
     # PermissionLevels     | Wo can do what. [start, stop, restart]
     # PermissionRoleLevels |
     # PermissionRoleIDs    |
@@ -89,6 +89,22 @@ class processing:
                     Multicraft.power_action(ctx, "start")
                     await ctx.send("The server status is unknown. I try to start the server but I can't guarantee anything")
 
+            # AMP
+            elif(Data.read(ctx, "SoftwareTyp") == "amp"):
+                if(AMP.status(ctx) == "Stopped" or AMP.status(ctx) == "Crashed"):
+                    AMP.power_action(ctx, "start")
+                    await ctx.send("The server starts")
+
+                elif(AMP.status(ctx) == "Starting" or AMP.status(ctx) == "Running" or AMP.status(ctx) == "Restarting"):
+                    await ctx.send(f"The is server already {AMP.status(ctx)}")
+
+                elif(AMP.status(ctx) == "Stopping"):
+                    await ctx.send("Let it stop before you start it")
+
+                elif(AMP.status(ctx) == "Unknown" or AMP.status(ctx) == "Failed"):
+                    AMP.power_action(ctx, "start")
+                    await ctx.send(f"The server status is {AMP.status(ctx)}. I try to start the server but I can't guarantee anything")
+
 
 
     @staticmethod
@@ -127,10 +143,26 @@ class processing:
                     Multicraft.power_action(ctx, "stop")
                     await ctx.send("The server status is unknown. I try to stop the server but I can't guarantee anything")
 
+            # AMP
+            elif(Data.read(ctx, "SoftwareTyp") == "amp"):
+                if(AMP.status(ctx) == "Running"):
+                    AMP.power_action(ctx, "stop")
+                    await ctx.send("The server stops")
+
+                elif(AMP.status(ctx) == "Stopping" or AMP.status(ctx) == "Crashed" or AMP.status(ctx) == "Stopped"):
+                    await ctx.send(f"The is server already {AMP.status(ctx)}")
+
+                elif(AMP.status(ctx) == "Starting" or AMP.status(ctx) == "Restarting"):
+                    await ctx.send(f"It is {AMP.status(ctx)}, let it do that before you stop it")
+
+                elif(AMP.status(ctx) == "unknown" or AMP.status(ctx) == "Failed"):
+                    AMP.power_action(ctx, "stop")
+                    await ctx.send(f"The server status is {AMP.status(ctx)}. I try to stop the server but I can't guarantee anything")
+
 
     @staticmethod
     async def restart(ctx):
-        if(Data.read(ctx, "PermissionLevels")[1] <= processing.getRolePermissonsLevel(ctx)):
+        if(Data.read(ctx, "PermissionLevels")[2] <= processing.getRolePermissonsLevel(ctx)):
             
             # Pterodactyl
             if(Data.read(ctx, "SoftwareTyp") == "pterodactyl"):
@@ -147,7 +179,6 @@ class processing:
 
                 else:
                     (f"Something went wrong. Have you already set up the system? \nError: {Pterodactyl.status(ctx)}")
-
 
             # Multicraft
             elif(Data.read(ctx, "SoftwareTyp") == "multicraft"):
@@ -167,6 +198,25 @@ class processing:
                 elif(Multicraft.status(ctx) == "unknown"):
                     Multicraft.power_action(ctx, "restart")
                     await ctx.send("The server status is unknown. I try to restart the server but I can't guarantee anything")
+
+            # AMP
+            elif(Data.read(ctx, "SoftwareTyp") == "amp"):
+                if(AMP.status(ctx) == "Running"):
+                    AMP.power_action(ctx, "restart")
+                    await ctx.send("The server restarts")
+
+                elif(AMP.status(ctx) == "Stopped" or AMP.status(ctx) == "Crashed" or AMP.status(ctx) == "Stopping"):
+                    await ctx.send(f"The server can't restart when its {AMP.status(ctx)}")
+
+                elif(AMP.status(ctx) == "Restarting"):
+                    await ctx.send(f"The is server already restarting")
+
+                elif(AMP.status(ctx) == "Starting"):
+                    await ctx.send(f"It is {Pterodactyl.status(ctx)}, let it do that before you restart it")
+
+                elif(AMP.status(ctx) == "Unknown" or AMP.status(ctx) == "Failed"):
+                    AMP.power_action(ctx, "restart")
+                    await ctx.send(f"The server status is {AMP.status(ctx)}. I try to restart the server but I can't guarantee anything")
                 
 
 class Pterodactyl:
@@ -212,6 +262,7 @@ class Pterodactyl:
     
 
 class Multicraft:
+    @staticmethod
     def power_action(ctx, action: str):
 
         API_Login = Data.read(ctx, "API_Login")
@@ -226,7 +277,7 @@ class Multicraft:
         })
         return response.json()
     
-
+    @staticmethod
     def status(ctx): # return = "running", "offline", "starting", "stopping", "restarting", "crashed", "unknown"
         API_Login = Data.read(ctx, "API_Login")
         API_URL = API_Login[0]
@@ -240,3 +291,29 @@ class Multicraft:
         })
         result = response.json()
         return result.get('status', 'unbekannt')
+    
+
+class AMP:
+    @staticmethod
+    def power_action(ctx, action):
+        API_Login = Data.read(ctx, "API_Login")
+        API_URL = API_Login[0]
+        Server_ID = API_Login[1]
+        API_key = API_Login[2]
+
+        HAEDERS = {"Authorization": f"Bearer {API_key}"}
+
+        url = f"{API_URL}/servers/{Server_ID}/{action}"
+        requests.post(url, headers=HAEDERS)
+
+    @staticmethod
+    def status(ctx): # return = "Running", "Stopped", "Starting", "Stopping", "Restarting", "Crashed", "Failed", "Unknown"
+        API_Login = Data.read(ctx, "API_Login")
+        API_URL = API_Login[0]
+        Server_ID = API_Login[1]
+        API_key = API_Login[2]
+
+        HAEDERS = {"Authorization": f"Bearer {API_key}"}
+
+        status = requests.get(f"{API_URL}/servers/{Server_ID}", headers=HAEDERS).json()
+        return status.get("State")
