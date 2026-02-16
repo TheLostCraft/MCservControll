@@ -1,6 +1,11 @@
-import shelve
 import aiohttp
+from cryptography.fernet import Fernet
+import json
+import discord
 
+with open("encrypt_key.txt", "r") as file:
+      MASTER_KEY = file.read().strip()
+fernet = Fernet(MASTER_KEY.encode())
 
 class Data: # save and read data
 
@@ -11,18 +16,60 @@ class Data: # save and read data
     # PermissionRoleLevels |
     # PermissionRoleIDs    |
 
+    Channel_name = "bot-data-X284M"
+
     @staticmethod
-    def write(ctx, typ, content): # save data
-        with shelve.open('Guilds_Data') as db:
-            db[f"{ctx.guild.id}_{typ}"] = content
+    async def _get_channel(ctx):
+        for channel in ctx.guild.text_channels:
+            if channel.name == Data.Channel_name:
+                return channel
+
+        # Channel does not exists → create
+        return await ctx.guild.create_text_channel(
+            Data.Channel_name,
+            reason="Bot needs a data storage"
+        )
+
+    @staticmethod
+    async def _get_message(channel):
+        async for msg in channel.history(limit=10):
+            if msg.author == channel.guild.me:
+                try:
+                    data = json.loads(msg.content)
+                    return msg, data
+                except json.JSONDecodeError:
+                    pass
+        return None, {}
 
 
     @staticmethod
-    def read(ctx, typ): # read data 
-        with shelve.open('Guilds_Data') as db:
-            content = db.get(f"{ctx.guild.id}_{typ}")
-        
-        return content
+    async def read(ctx, key):
+        channel = await Data._get_channel(ctx)
+        msg, data = await Data._get_message(channel)
+        data = Data.decrypt(data)
+        return data.get(key)
+
+    @staticmethod
+    async def write(ctx, key, value):
+        channel = await Data._get_channel(ctx)
+        msg, data = await Data._get_message(channel)
+
+        data[key] = value
+        content = json.dumps(data, indent=2)
+        content = Data.encrypt(content)
+
+        if msg:
+            await msg.edit(content=content)
+        else:
+            await channel.send(content)
+    
+    @staticmethod
+    def encrypt(value):
+        return fernet.encrypt(value.encode()).decode()
+    
+    @staticmethod
+    def decrypt(value):
+        return fernet.decrypt(value.encode()).decode()
     
 
 class processing:
@@ -38,6 +85,7 @@ class processing:
         return 0 
    
 
+    @staticmethod
     def getServerSoftware(ctx):
         Software = Data.read(ctx, "SoftwareTyp")
 
@@ -53,11 +101,11 @@ class processing:
     async def start(ctx):
         if(Data.read(ctx, "PermissionLevels")[0] <= processing.getRolePermissonsLevel(ctx)):
             server = processing.getServerSoftware(ctx) # software class ( AMP() )
-            server_status = server.status(ctx).lower()
+            server_status = (await server.status(ctx)).lower()
             
-            if(server_status != "running" or server_status != "starting" or server_status != "restarting" or server_status != "stopping"):
+            if(server_status != "running" and server_status != "starting" and server_status != "restarting" and server_status != "stopping"):
                 await ctx.send(f"The server is starting now. Current state: {server_status}")
-                server.power_action(ctx, "start")
+                await server.power_action(ctx, "start")
 
             elif(server_status == "running" or server_status == "starting" or server_status == "restarting"):
                 await ctx.send(f"The server is already {server_status}")
@@ -77,10 +125,10 @@ class processing:
         if(Data.read(ctx, "PermissionLevels")[1] <= processing.getRolePermissonsLevel(ctx)):
             
             server = processing.getServerSoftware(ctx) # software class ( AMP() )
-            server_status = server.status(ctx).lower()
+            server_status = (await server.status(ctx)).lower()
             
             if(server_status == "running"):
-                server.power_action(ctx, "stop")
+                await server.power_action(ctx, "stop")
                 await ctx.send(f"The server is stoping now.")
 
             elif(server_status == "stopping" or server_status == "offline" or server_status == "stopped" or server_status == "crashed"):
@@ -91,7 +139,7 @@ class processing:
 
             elif(server_status == "unknown" or server_status == "failed"):
                 await ctx.send(f"The server state is {server_status} but I try to stop it")
-                server.power_action(ctx, "stop")
+                await server.power_action(ctx, "stop")
 
             else:
                 await ctx.send(f"Hopefully you never see this message: Error: Status: {server_status}")
@@ -105,13 +153,13 @@ class processing:
         if(Data.read(ctx, "PermissionLevels")[2] <= processing.getRolePermissonsLevel(ctx)):
             
             server = processing.getServerSoftware(ctx) # software class ( AMP() )
-            server_status = server.status(ctx).lower()
+            server_status = (await server.status(ctx)).lower()
             
             if(server_status == "running"):
-                server.power_action(ctx, "restart")
+                await server.power_action(ctx, "restart")
                 await ctx.send(f"The server is stoping now.")
 
-            elif(server_status == "restarting" or server_status):
+            elif(server_status == "restarting"):
                 await ctx.send(f"The server is already {server_status}")
 
             elif(server_status == "starting"):
@@ -122,7 +170,7 @@ class processing:
 
             elif(server_status == "unknown" or server_status == "failed"):
                 await ctx.send(f"The server state is {server_status} but I try to stop it")
-                server.power_action(ctx, "stop")
+                await server.power_action(ctx, "stop")
 
             else:
                 await ctx.send(f"Hopefully you never see this message: Error: Status: {server_status}")
