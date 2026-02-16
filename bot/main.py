@@ -3,11 +3,17 @@ from discord.ext import commands
 
 from func import Data
 from func import processing
-from func import Pterodactyl
+from func import Pterodactyl, Multicraft, AMP
 
 import shelve
+from cryptography.fernet import Fernet
+import os
 import asyncio
+import json
 
+with open("encrypt_key.txt", "r") as file: # load the encrypton ojekt
+      MASTER_KEY = file.read().strip()
+fernet = Fernet(MASTER_KEY.encode())
 
 prefix = '>' # <- Your prefix you want for your Discord bot
 
@@ -74,7 +80,7 @@ async def setup(ctx):
             API_Login = [API_URL, Server_ID, API_key]
 
         else:
-            await ctx.send("Your softwart does not exist in our database, I can only do Pterodactyl.\nProcess aborted")
+            await ctx.send("Your softwart does not exist in our database.\nProcess aborted")
             return
 
 
@@ -93,19 +99,31 @@ async def setup(ctx):
         return
 
 
+@bot.command()
+async def rolePermission(ctx, Role: discord.Role, PermissionLevel: int):
+    Permissions = Data.read(ctx, "Permissions") or {}
+
+    Permissions[str(Role.id)] = PermissionLevel
+    Data.write(ctx, "Permissions", Permissions)
+
+    await ctx.send(f"Role '{Role.name}' has now a permission level of {PermissionLevel}")
+
+
 # start / stop / restart
 @bot.command()
 async def start(ctx):
     await processing.start(ctx)
 
-async def start(ctx):
+@bot.command()
+async def stop(ctx):
     await processing.stop(ctx)
 
-async def start(ctx):
+@bot.command()
+async def restart(ctx):
     await processing.restart(ctx)
     
 
 # read the token of your discord bot and use it
 with open("token.txt", "r") as file: # token.txt content = discord bot token
-    token = int(file.read())
+    token = file.read().strip()
 bot.run(token)
