@@ -17,7 +17,7 @@ class Data: # save and read data
     # PermissionRoleLevels |
     # PermissionRoleIDs    |
 
-    Channel_name = "bot-data-X284M"
+    Channel_name = "bot-data-x284m"
 
     @staticmethod
     async def _get_channel(ctx):
@@ -326,3 +326,4 @@ class AMP(ServerInterface):
         async with aiohttp.ClientSession() as session:
             async with session.post(f"{API_URL}/servers/{Server_ID}/{action}", headers=headers) as resp:
                 return await resp.text()
+
