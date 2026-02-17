@@ -115,6 +115,18 @@ async def roleCommandPermission(ctx, Command: str, PermissionLevel: int):
     if(Command.lower() == "start"):
         PermissionLevels[0] = PermissionLevel
         await Data.write(ctx, "PermissionLevels", PermissionLevels)
+    elif(Command.lower() == "stop"):
+        PermissionLevels[1] = PermissionLevel
+        await Data.write(ctx, "PermissionLevels", PermissionLevels)
+    elif(Command.lower() == "restart"):
+        PermissionLevels[2] = PermissionLevel
+        await Data.write(ctx, "PermissionLevels", PermissionLevels)
+    else:
+        return 
+    
+    await ctx.send(f"The command {prefix}{Command} needs now a permission level of {PermissionLevel}")
+
+    
 
 
 
