@@ -3,6 +3,7 @@ from cryptography.fernet import Fernet
 import json
 import discord
 
+
 with open("encrypt_key.txt", "r") as file:
       MASTER_KEY = file.read().strip()
 fernet = Fernet(MASTER_KEY.encode())
@@ -34,29 +35,42 @@ class Data: # save and read data
     async def _get_message(channel):
         async for msg in channel.history(limit=10):
             if msg.author == channel.guild.me:
-                try:
-                    data = json.loads(msg.content)
-                    return msg, data
-                except json.JSONDecodeError:
-                    pass
-        return None, {}
+                return msg
+        return None
 
 
     @staticmethod
     async def read(ctx, key):
         channel = await Data._get_channel(ctx)
-        msg, data = await Data._get_message(channel)
-        data = Data.decrypt(data)
+        msg = await Data._get_message(channel)
+
+        if not msg:
+            return None
+
+        try:
+            decrypted = Data.decrypt(msg.content)
+            data = json.loads(decrypted)
+        except Exception:
+            data = {}
         return data.get(key)
 
     @staticmethod
     async def write(ctx, key, value):
         channel = await Data._get_channel(ctx)
-        msg, data = await Data._get_message(channel)
+        msg = await Data._get_message(channel)
+
+        if msg:
+            try:
+                decrypted = Data.decrypt(msg.content)
+                data = json.loads(decrypted)
+            except Exception:
+                data = {}
+        else:
+            data = {}
 
         data[key] = value
-        content = json.dumps(data, indent=2)
-        content = Data.encrypt(content)
+
+        content = Data.encrypt(json.dumps(data))
 
         if msg:
             await msg.edit(content=content)
@@ -74,8 +88,8 @@ class Data: # save and read data
 
 class processing:
     @staticmethod
-    def getRolePermissonsLevel(ctx):
-        Permissions = Data.read(ctx, "Permissions") or {}
+    async def getRolePermissonsLevel(ctx):
+        Permissions = await Data.read(ctx, "Permissions") or {}
         user_roles = [str(role.id) for role in ctx.author.roles]
  
         levels = [Permissions[role_id] for role_id in user_roles if role_id in Permissions]
@@ -86,22 +100,32 @@ class processing:
    
 
     @staticmethod
-    def getServerSoftware(ctx):
-        Software = Data.read(ctx, "SoftwareTyp")
+    async def getServerSoftware(ctx):
+        Software = await Data.read(ctx, "SoftwareTyp")
 
         if(Software == "pterodactyl"):
             return Pterodactyl()
         elif(Software == "multicraft"):
             return Multicraft()
         elif(Software == "amp"):
-            return AMP()
+            return AMP()  
+        else:
+            return None
+ 
 
 
     @staticmethod
-    async def start(ctx):
-        if(Data.read(ctx, "PermissionLevels")[0] <= processing.getRolePermissonsLevel(ctx)):
-            server = processing.getServerSoftware(ctx) # software class ( AMP() )
+    async def start(ctx, prefix):
+        permission_levels = await Data.read(ctx, "PermissionLevels") or [0,0,0]
+
+        if permission_levels[0] <= await processing.getRolePermissonsLevel(ctx):
+
+            server = await processing.getServerSoftware(ctx) # software class ( AMP() )
+            if not server:
+                await ctx.send(f"Server not configured. Use {prefix}setup first.")
+                return
             server_status = (await server.status(ctx)).lower()
+
             
             if(server_status != "running" and server_status != "starting" and server_status != "restarting" and server_status != "stopping"):
                 await ctx.send(f"The server is starting now. Current state: {server_status}")
@@ -121,12 +145,17 @@ class processing:
             
 
     @staticmethod
-    async def stop(ctx):
-        if(Data.read(ctx, "PermissionLevels")[1] <= processing.getRolePermissonsLevel(ctx)):
+    async def stop(ctx, prefix):
+        permission_levels = await Data.read(ctx, "PermissionLevels") or [0,0,0]
+
+        if permission_levels[1] <= await processing.getRolePermissonsLevel(ctx):
             
-            server = processing.getServerSoftware(ctx) # software class ( AMP() )
+            server = await processing.getServerSoftware(ctx) # software class ( AMP() )
+            if not server:
+                await ctx.send(f"Server not configured. Use {prefix}setup first.")
+                return
             server_status = (await server.status(ctx)).lower()
-            
+
             if(server_status == "running"):
                 await server.power_action(ctx, "stop")
                 await ctx.send(f"The server is stoping now.")
@@ -149,12 +178,17 @@ class processing:
 
 
     @staticmethod
-    async def restart(ctx):
-        if(Data.read(ctx, "PermissionLevels")[2] <= processing.getRolePermissonsLevel(ctx)):
+    async def restart(ctx, prefix):
+        permission_levels = await Data.read(ctx, "PermissionLevels") or [0,0,0]
+
+        if permission_levels[2] <= await processing.getRolePermissonsLevel(ctx):
             
-            server = processing.getServerSoftware(ctx) # software class ( AMP() )
+            server = await processing.getServerSoftware(ctx) # software class ( AMP() )
+            if not server:
+                await ctx.send(f"Server not configured. Use {prefix}setup first.")
+                return
             server_status = (await server.status(ctx)).lower()
-            
+                        
             if(server_status == "running"):
                 await server.power_action(ctx, "restart")
                 await ctx.send(f"The server is stoping now.")
@@ -192,7 +226,9 @@ class ServerInterface:
 class Pterodactyl(ServerInterface):
     @staticmethod
     async def status(ctx):
-        API_Login = Data.read(ctx, "API_Login")
+        API_Login = await Data.read(ctx, "API_Login")
+        if not API_Login:
+            return "not_configured"
         Panel_URL, Server_ID, API_key = API_Login
 
         headers = {
@@ -209,7 +245,9 @@ class Pterodactyl(ServerInterface):
 
     @staticmethod
     async def power_action(ctx, action):  # "start", "stop", "restart"
-        API_Login = Data.read(ctx, "API_Login")
+        API_Login = await Data.read(ctx, "API_Login")
+        if not API_Login:
+            return "not_configured"
         Panel_URL, Server_ID, API_key = API_Login
 
         headers = {
@@ -227,7 +265,9 @@ class Pterodactyl(ServerInterface):
 class Multicraft(ServerInterface):
     @staticmethod
     async def status(ctx):
-        API_Login = Data.read(ctx, "API_Login")
+        API_Login = await Data.read(ctx, "API_Login")
+        if not API_Login:
+            return "not_configured"
         API_URL, Server_ID, API_key = API_Login
 
         async with aiohttp.ClientSession() as session:
@@ -243,7 +283,9 @@ class Multicraft(ServerInterface):
 
     @staticmethod
     async def power_action(ctx, action):
-        API_Login = Data.read(ctx, "API_Login")
+        API_Login = await Data.read(ctx, "API_Login")
+        if not API_Login:
+            return "not_configured"
         API_URL, Server_ID, API_key = API_Login
 
         async with aiohttp.ClientSession() as session:
@@ -258,7 +300,9 @@ class Multicraft(ServerInterface):
 class AMP(ServerInterface):
     @staticmethod
     async def status(ctx):
-        API_Login = Data.read(ctx, "API_Login")
+        API_Login = await Data.read(ctx, "API_Login")
+        if not API_Login:
+            return "not_configured"
         API_URL, Server_ID, API_key = API_Login
 
         headers = {"Authorization": f"Bearer {API_key}"}
@@ -272,7 +316,9 @@ class AMP(ServerInterface):
 
     @staticmethod
     async def power_action(ctx, action):
-        API_Login = Data.read(ctx, "API_Login")
+        API_Login = await Data.read(ctx, "API_Login")
+        if not API_Login:
+            return "not_configured"
         API_URL, Server_ID, API_key = API_Login
 
         headers = {"Authorization": f"Bearer {API_key}"}
