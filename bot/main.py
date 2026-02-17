@@ -5,7 +5,6 @@ from func import Data
 from func import processing
 from func import Pterodactyl, Multicraft, AMP
 
-import shelve
 from cryptography.fernet import Fernet
 import os
 import asyncio
@@ -16,7 +15,7 @@ with open("encrypt_key.txt", "r") as file: # load the encrypton ojekt
 fernet = Fernet(MASTER_KEY.encode())
 
 prefix = '>' # <- Your prefix you want for your Discord bot
-
+ 
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix=prefix, intents=intents)
@@ -89,8 +88,8 @@ async def setup(ctx):
         msg = await bot.wait_for("message", timeout=1800, check=check)
         if(msg.content.lower() == "save"):
             # save data
-            Data.write(ctx, "SoftwareTyp", SoftwareTyp.lower())
-            Data.write(ctx, "API_Login", API_Login)
+            await Data.write(ctx, "SoftwareTyp", SoftwareTyp.lower())
+            await Data.write(ctx, "API_Login", API_Login)
 
             await ctx.send(f"Your setup is saved \nSoftwareTyp: {SoftwareTyp}")
 
@@ -101,26 +100,36 @@ async def setup(ctx):
 
 @bot.command()
 async def rolePermission(ctx, Role: discord.Role, PermissionLevel: int):
-    Permissions = Data.read(ctx, "Permissions") or {}
+    Permissions = await Data.read(ctx, "Permissions") or {}
 
     Permissions[str(Role.id)] = PermissionLevel
-    Data.write(ctx, "Permissions", Permissions)
+    await Data.write(ctx, "Permissions", Permissions)
 
     await ctx.send(f"Role '{Role.name}' has now a permission level of {PermissionLevel}")
+
+
+@bot.command()
+async def roleCommandPermission(ctx, Command: str, PermissionLevel: int):
+    PermissionLevels = await Data.read(ctx, "PermissionLevels") or [0,0,0]
+
+    if(Command.lower() == "start"):
+        PermissionLevels[0] = PermissionLevel
+        await Data.write(ctx, "PermissionLevels", PermissionLevels)
+
 
 
 # start / stop / restart
 @bot.command()
 async def start(ctx):
-    await processing.start(ctx)
+    await processing.start(ctx, prefix)
 
 @bot.command()
 async def stop(ctx):
-    await processing.stop(ctx)
+    await processing.stop(ctx, prefix)
 
 @bot.command()
 async def restart(ctx):
-    await processing.restart(ctx)
+    await processing.restart(ctx, prefix)
     
 
 # read the token of your discord bot and use it
