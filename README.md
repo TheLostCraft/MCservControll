@@ -6,6 +6,8 @@ Your is saved encrypt in an Discord channel that can only be seen by an admin.
 
 This means that if you want to delete or reset your data, you only need to delete the channel and I can't touch your data.
 
+Please let me know your suggestions for improvement.
+
 # Commands
 
 /setup -- set up the discord bot
