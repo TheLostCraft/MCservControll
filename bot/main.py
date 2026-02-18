@@ -1,8 +1,9 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 from func import Data
-from func import processing
+from func import processing, FakeCTX
 from func import Pterodactyl, Multicraft, AMP
 
 from cryptography.fernet import Fernet
@@ -14,134 +15,134 @@ with open("encrypt_key.txt", "r") as file: # load the encrypton ojekt
       MASTER_KEY = file.read().strip()
 fernet = Fernet(MASTER_KEY.encode())
 
-prefix = '>' # <- Your prefix you want for your Discord bot
- 
-intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix=prefix, intents=intents)
+PermissionLevelsFallSave = [0,0,0,0,0]
 
+class MyBot(commands.Bot):
+    def __init__(self):
+        super().__init__(command_prefix=">", intents=discord.Intents.default())
+        self.tree = app_commands.CommandTree(self)
 
-@bot.command()
-async def setup(ctx):
-    def check(msg):
-        return msg.author == ctx.author and msg.channel == ctx.channel
+bot = MyBot()
 
-    try:
-        # Question 1
-        await ctx.send("What software do you use | Pterodactyl")
-        msg = await bot.wait_for("message", timeout=1800, check=check)
-        SoftwareTyp = msg.content
+@bot.event 
+async def on_ready():
+    await bot.tree.sync()
 
-
-        if(SoftwareTyp.lower() == "pterodactyl"):
-            await ctx.send("What is your Panel url")
-            msg = await bot.wait_for("message", timeout=1800, check=check)
-            Panel_URL = msg.content
-
-            await ctx.send("What is the Server ID")
-            msg = await bot.wait_for("message", timeout=1800, check=check)
-            Server_ID = msg.content
-
-            await ctx.send("What is the API Key")
-            msg = await bot.wait_for("message", timeout=1800, check=check)
-            API_key = msg.content
-
-            API_Login = [Panel_URL, Server_ID, API_key]
-
-        elif(SoftwareTyp.lower() == "multicraft"):
-            await ctx.send("What is your API url")
-            msg = await bot.wait_for("message", timeout=1800, check=check)
-            API_URL = msg.content
-
-            await ctx.send("What is the Server ID")
-            msg = await bot.wait_for("message", timeout=1800, check=check)
-            Server_ID = msg.content
-
-            await ctx.send("What is the API Key")
-            msg = await bot.wait_for("message", timeout=1800, check=check)
-            API_key = msg.content
-
-            API_Login = [API_URL, Server_ID, API_key]
-
-        elif(SoftwareTyp.lower() == "amp"):
-            await ctx.send("What is your API url")
-            msg = await bot.wait_for("message", timeout=1800, check=check)
-            API_URL = msg.content
-
-            await ctx.send("What is the Server ID")
-            msg = await bot.wait_for("message", timeout=1800, check=check)
-            Server_ID = msg.content
-
-            await ctx.send("What is the API Key")
-            msg = await bot.wait_for("message", timeout=1800, check=check)
-            API_key = msg.content
-
-            API_Login = [API_URL, Server_ID, API_key]
-
-        else:
-            await ctx.send("Your softwart does not exist in our database.\nProcess aborted")
-            return
-
-
-        # Last Question
-        await ctx.send("Do you want to save the setup or cancel | Save, Cancel")
-        msg = await bot.wait_for("message", timeout=1800, check=check)
-        if(msg.content.lower() == "save"):
-            # save data
-            await Data.write(ctx, "SoftwareTyp", SoftwareTyp.lower())
-            await Data.write(ctx, "API_Login", API_Login)
-
-            await ctx.send(f"Your setup is saved \nSoftwareTyp: {SoftwareTyp}")
-
-    except asyncio.TimeoutError:
-        await ctx.send("Process aborted: Timeout")
+@bot.tree.command(name="setup", description="setup the discord bot")
+@app_commands.describe(Software_Typ="What software do you use", Panel_URL="Your panel/api url", Server_ID="Your sever id", API_key="Your API key")
+async def setup(interaction: discord.Interaction, Software_Typ: str, Panel_URL: str, Server_ID: str, API_key: str):
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message( "Only administrators can use this command.", ephemeral=True)
         return
 
+    API_Login = [Panel_URL, Server_ID, API_key]
+    ctx = FakeCTX(interaction)
 
-@bot.command()
-async def rolePermission(ctx, Role: discord.Role, PermissionLevel: int):
-    Permissions = await Data.read(ctx, "Permissions") or {}
-
-    Permissions[str(Role.id)] = PermissionLevel
-    await Data.write(ctx, "Permissions", Permissions)
-
-    await ctx.send(f"Role '{Role.name}' has now a permission level of {PermissionLevel}")
+    await Data.write(ctx, "SoftwareTyp", Software_Typ.lower())
+    await Data.write(ctx, "API_Login", API_Login)
+    await interaction.response.send_message("Your data has been saved", ephemeral=True)
 
 
-@bot.command()
-async def roleCommandPermission(ctx, Command: str, PermissionLevel: int):
-    PermissionLevels = await Data.read(ctx, "PermissionLevels") or [0,0,0]
+@bot.tree.command(name="rolepermission", description="Set the role permission level")
+@app_commands.describe(Role="The role", PermissionLevel="The permission level")
+async def RolePermission(interaction: discord.Interaction, Role: discord.Role, PermissionLevel: int):
+    ctx = FakeCTX(interaction)
 
-    if(Command.lower() == "start"):
-        PermissionLevels[0] = PermissionLevel
-        await Data.write(ctx, "PermissionLevels", PermissionLevels)
-    elif(Command.lower() == "stop"):
-        PermissionLevels[1] = PermissionLevel
-        await Data.write(ctx, "PermissionLevels", PermissionLevels)
-    elif(Command.lower() == "restart"):
-        PermissionLevels[2] = PermissionLevel
-        await Data.write(ctx, "PermissionLevels", PermissionLevels)
+    permission_levels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
+    if permission_levels[3] <= await processing.getRolePermissonsLevel(ctx):
+
+        Permissions = await Data.read(ctx, "Permissions") or {}
+
+        Permissions[str(Role.id)] = PermissionLevel
+        await Data.write(ctx, "Permissions", Permissions)
+
+        await interaction.response.send_message(f"Role '{Role.name}' has now a permission level of {PermissionLevel}", ephemeral=True)
+
     else:
-        return 
+        await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
+
+@bot.tree.command(name="rolecommandpermission", description="Set the role permission level needed to do a command")
+@app_commands.choices(command=[
+    app_commands.Choice(name="Start", value="start"),
+    app_commands.Choice(name="Stop", value="stop"),
+    app_commands.Choice(name="Restart", value="restart"),
+    app_commands.Choice(name="RolePermission", value="rolepermission"),
+    app_commands.Choice(name="RoleCommandPermission", value="rolecommandpermission"),
+])
+async def RoleCommandPermission(
+    interaction: discord.Interaction,
+    Command: app_commands.Choice[str],
+    PermissionLevel: int
+):
+    ctx = FakeCTX(interaction)
+    PermissionLevels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
+    if PermissionLevels[4] <= await processing.getRolePermissonsLevel(ctx):
+        
+        if(Command.value == "start"):
+            PermissionLevels[0] = PermissionLevel
+            await Data.write(ctx, "PermissionLevels", PermissionLevels)
+        elif(Command.value == "stop"):
+            PermissionLevels[1] = PermissionLevel
+            await Data.write(ctx, "PermissionLevels", PermissionLevels)
+        elif(Command.value == "restart"):
+            PermissionLevels[2] = PermissionLevel
+            await Data.write(ctx, "PermissionLevels", PermissionLevels)
+        elif(Command.value == "rolepermission"):
+            PermissionLevels[3] = PermissionLevel
+            await Data.write(ctx, "PermissionLevels", PermissionLevels)
+        elif(Command.value == "rolecommandpermission"):
+            PermissionLevels[4] = PermissionLevel
+            await Data.write(ctx, "PermissionLevels", PermissionLevels)
+        else:
+           return 
     
-    await ctx.send(f"The command {prefix}{Command} needs now a permission level of {PermissionLevel}")
+        await interaction.response.send_message(f"The command /{Command} needs now a permission level of {PermissionLevel}", ephemeral=True)
+    
+    else:
+        await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
 
     
 
 
 
 # start / stop / restart
-@bot.command()
-async def start(ctx):
-    await processing.start(ctx, prefix)
+@bot.tree.command(name="start", description="Start your server")
+async def start(interaction: discord.Interaction):
+    ctx = FakeCTX(interaction)
 
-@bot.command()
-async def stop(ctx):
-    await processing.stop(ctx, prefix)
+    permission_levels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
+    if permission_levels[0] <= await processing.getRolePermissonsLevel(ctx):
 
-@bot.command()
-async def restart(ctx):
-    await processing.restart(ctx, prefix)
+        await processing.start(ctx)
+
+    else:
+        await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
+
+
+@bot.tree.command(name="stop", description="Stop your server")
+async def stop(interaction: discord.Interaction):
+    ctx = FakeCTX(interaction)
+
+    permission_levels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
+    if permission_levels[1] <= await processing.getRolePermissonsLevel(ctx):
+
+        await processing.stop(ctx)
+
+    else:
+        await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
+
+
+@bot.tree.command(name="restart", description="Restart your server")
+async def restart(interaction: discord.Interaction):
+    ctx = FakeCTX(interaction)
+
+    permission_levels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
+    if permission_levels[2] <= await processing.getRolePermissonsLevel(ctx):
+        
+        await processing.restart(ctx)
+
+    else:
+        await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
     
 
 # read the token of your discord bot and use it
