@@ -12,8 +12,17 @@
 
 /restart -- restart your server
 
-
-□■
 #
 # Supported Software
+■■□□□□□□□□ = I think about it
 
+■■■■■□□□□□ = I work on it
+
+■■■■■■■■■■ = I added it
+##
+
+■■■■■■■■■■ Pterodactyl
+
+■■■■■■■■■■ Multicraft
+
+■■■■■■■■■■ AMP
