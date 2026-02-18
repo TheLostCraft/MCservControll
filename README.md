@@ -37,6 +37,6 @@ Please let me know your suggestions for improvement. 💬
 
 ■■■■■■■■■■ AMP
 
-■■■■□□□□□□ Crafty Controller
+■■■■■■■■■■ Crafty Controller
 
 ■■□□□□□□□□ PufferPanel
