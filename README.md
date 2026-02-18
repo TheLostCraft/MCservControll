@@ -39,4 +39,4 @@ Please let me know your suggestions for improvement. 💬
 
 ■■■■■■■■■■ Crafty Controller
 
-■■□□□□□□□□ PufferPanel
+■■■■■■■■■■ PufferPanel
