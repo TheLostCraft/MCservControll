@@ -1,3 +1,27 @@
+# Commands:
+
+/setup -- set up the discord bot
+
+/rolepermission -- set the permission level for a role
+
+/rolecommandpermission -- set the permission level needed for a command
+
+/start -- start your server
+
+/stop -- stop your server
+
+/restart -- restart your server
+
+#
+# How to set up the discord bot
+
+
+
+
+
+
+
+
 # MCservControll
 A open-source discord bot to controll minecraft servers via discord.
 If you have any ideas for the project, let me know.
