@@ -44,7 +44,7 @@ async def setup(interaction: discord.Interaction, software_typ: str, panel_url: 
 
 @bot.tree.command(name="rolepermission", description="set the role permission level")
 @app_commands.describe(role="The role", permissionlevel="The permission level")
-async def RolePermission(interaction: discord.Interaction, role: discord.Role, permissionlevel: int):
+async def rolepermission(interaction: discord.Interaction, role: discord.Role, permissionlevel: int):
     ctx = FakeCTX(interaction)
 
     permission_levels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
@@ -71,31 +71,31 @@ async def RolePermission(interaction: discord.Interaction, role: discord.Role, p
 async def RoleCommandPermission(
     interaction: discord.Interaction,
     command: app_commands.Choice[str],
-    PermissionLevel: int
+    permissionlevel: int
 ):
     ctx = FakeCTX(interaction)
     PermissionLevels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
     if PermissionLevels[4] <= await processing.getRolePermissonsLevel(ctx):
         
         if(command.value == "start"):
-            PermissionLevels[0] = PermissionLevel
+            PermissionLevels[0] = permissionlevel
             await Data.write(ctx, "PermissionLevels", PermissionLevels)
         elif(command.value == "stop"):
-            PermissionLevels[1] = PermissionLevel
+            PermissionLevels[1] = permissionlevel
             await Data.write(ctx, "PermissionLevels", PermissionLevels)
         elif(command.value == "restart"):
-            PermissionLevels[2] = PermissionLevel
+            PermissionLevels[2] = permissionlevel
             await Data.write(ctx, "PermissionLevels", PermissionLevels)
         elif(command.value == "rolepermission"):
-            PermissionLevels[3] = PermissionLevel
+            PermissionLevels[3] = permissionlevel
             await Data.write(ctx, "PermissionLevels", PermissionLevels)
         elif(command.value == "rolecommandpermission"):
-            PermissionLevels[4] = PermissionLevel
+            PermissionLevels[4] = permissionlevel
             await Data.write(ctx, "PermissionLevels", PermissionLevels)
         else:
            return 
     
-        await interaction.response.send_message(f"The command /{command} needs now a permission level of {PermissionLevel}", ephemeral=True)
+        await interaction.response.send_message(f"The command /{command.value} needs now a permission level of {permissionlevel}", ephemeral=True)
     
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
