@@ -36,3 +36,7 @@ Please let me know your suggestions for improvement. 💬
 ■■■■■■■■■■ Multicraft
 
 ■■■■■■■■■■ AMP
+
+■■□□□□□□□□ Crafty Controller
+
+■■□□□□□□□□ PufferPanel
