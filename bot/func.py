@@ -322,6 +322,3 @@ class AMP(ServerInterface):
         async with aiohttp.ClientSession() as session:
             async with session.post(f"{API_URL}/servers/{Server_ID}/{action}", headers=headers) as resp:
                 return await resp.text()
-
-
-
