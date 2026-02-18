@@ -12,5 +12,8 @@
 
 /restart -- restart your server
 
+
+□■
 #
 # Supported Software
+
