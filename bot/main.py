@@ -20,7 +20,6 @@ PermissionLevelsFallSave = [0,0,0,0,0]
 class MyBot(commands.Bot):
     def __init__(self):
         super().__init__(command_prefix=">", intents=discord.Intents.default())
-        self.tree = app_commands.CommandTree(self)
 
 bot = MyBot()
 
@@ -29,23 +28,23 @@ async def on_ready():
     await bot.tree.sync()
 
 @bot.tree.command(name="setup", description="setup the discord bot")
-@app_commands.describe(Software_Typ="What software do you use", Panel_URL="Your panel/api url", Server_ID="Your sever id", API_key="Your API key")
-async def setup(interaction: discord.Interaction, Software_Typ: str, Panel_URL: str, Server_ID: str, API_key: str):
+@app_commands.describe(software_typ="What software do you use", panel_url="Your panel/api url", server_id="Your sever id", api_key="Your API key")
+async def setup(interaction: discord.Interaction, software_typ: str, panel_url: str, server_id: str, api_key: str):
     if not interaction.user.guild_permissions.administrator:
         await interaction.response.send_message( "Only administrators can use this command.", ephemeral=True)
         return
 
-    API_Login = [Panel_URL, Server_ID, API_key]
+    API_Login = [panel_url, server_id, api_key]
     ctx = FakeCTX(interaction)
 
-    await Data.write(ctx, "SoftwareTyp", Software_Typ.lower())
+    await Data.write(ctx, "SoftwareTyp", software_typ.lower())
     await Data.write(ctx, "API_Login", API_Login)
     await interaction.response.send_message("Your data has been saved", ephemeral=True)
 
 
-@bot.tree.command(name="rolepermission", description="Set the role permission level")
-@app_commands.describe(Role="The role", PermissionLevel="The permission level")
-async def RolePermission(interaction: discord.Interaction, Role: discord.Role, PermissionLevel: int):
+@bot.tree.command(name="rolepermission", description="set the role permission level")
+@app_commands.describe(role="The role", permissionlevel="The permission level")
+async def RolePermission(interaction: discord.Interaction, role: discord.Role, permissionlevel: int):
     ctx = FakeCTX(interaction)
 
     permission_levels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
@@ -53,15 +52,15 @@ async def RolePermission(interaction: discord.Interaction, Role: discord.Role, P
 
         Permissions = await Data.read(ctx, "Permissions") or {}
 
-        Permissions[str(Role.id)] = PermissionLevel
+        Permissions[str(role.id)] = permissionlevel
         await Data.write(ctx, "Permissions", Permissions)
 
-        await interaction.response.send_message(f"Role '{Role.name}' has now a permission level of {PermissionLevel}", ephemeral=True)
+        await interaction.response.send_message(f"Role '{role.name}' has now a permission level of {permissionlevel}", ephemeral=True)
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
 
-@bot.tree.command(name="rolecommandpermission", description="Set the role permission level needed to do a command")
+@bot.tree.command(name="rolecommandpermission", description="set the role permission level needed to do a command")
 @app_commands.choices(command=[
     app_commands.Choice(name="Start", value="start"),
     app_commands.Choice(name="Stop", value="stop"),
@@ -71,32 +70,32 @@ async def RolePermission(interaction: discord.Interaction, Role: discord.Role, P
 ])
 async def RoleCommandPermission(
     interaction: discord.Interaction,
-    Command: app_commands.Choice[str],
+    command: app_commands.Choice[str],
     PermissionLevel: int
 ):
     ctx = FakeCTX(interaction)
     PermissionLevels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
     if PermissionLevels[4] <= await processing.getRolePermissonsLevel(ctx):
         
-        if(Command.value == "start"):
+        if(command.value == "start"):
             PermissionLevels[0] = PermissionLevel
             await Data.write(ctx, "PermissionLevels", PermissionLevels)
-        elif(Command.value == "stop"):
+        elif(command.value == "stop"):
             PermissionLevels[1] = PermissionLevel
             await Data.write(ctx, "PermissionLevels", PermissionLevels)
-        elif(Command.value == "restart"):
+        elif(command.value == "restart"):
             PermissionLevels[2] = PermissionLevel
             await Data.write(ctx, "PermissionLevels", PermissionLevels)
-        elif(Command.value == "rolepermission"):
+        elif(command.value == "rolepermission"):
             PermissionLevels[3] = PermissionLevel
             await Data.write(ctx, "PermissionLevels", PermissionLevels)
-        elif(Command.value == "rolecommandpermission"):
+        elif(command.value == "rolecommandpermission"):
             PermissionLevels[4] = PermissionLevel
             await Data.write(ctx, "PermissionLevels", PermissionLevels)
         else:
            return 
     
-        await interaction.response.send_message(f"The command /{Command} needs now a permission level of {PermissionLevel}", ephemeral=True)
+        await interaction.response.send_message(f"The command /{command} needs now a permission level of {PermissionLevel}", ephemeral=True)
     
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
@@ -106,7 +105,7 @@ async def RoleCommandPermission(
 
 
 # start / stop / restart
-@bot.tree.command(name="start", description="Start your server")
+@bot.tree.command(name="start", description="start your server")
 async def start(interaction: discord.Interaction):
     ctx = FakeCTX(interaction)
 
@@ -119,7 +118,7 @@ async def start(interaction: discord.Interaction):
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
 
 
-@bot.tree.command(name="stop", description="Stop your server")
+@bot.tree.command(name="stop", description="stop your server")
 async def stop(interaction: discord.Interaction):
     ctx = FakeCTX(interaction)
 
