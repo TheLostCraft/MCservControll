@@ -1,3 +1,7 @@
+import discord
+from discord import app_commands
+from discord.ext import commands
+
 import aiohttp
 from cryptography.fernet import Fernet
 import json
@@ -13,7 +17,7 @@ class Data: # save and read data
     # TYPs :
     # SoftwareTyp          | pterodactyl, multicraft, amp
     # API_Login            | Pterodactly = [Panel_URL, Server_ID, API_key]; multicraft, AMP = [API_URL, Server_ID, API_key]
-    # PermissionLevels     | Wo can do what. [start, stop, restart]
+    # PermissionLevels     | Wo can do what. [start, stop, restart, RolePermission, RoleCommandPermission]
     # PermissionRoleLevels |
     # PermissionRoleIDs    |
 
@@ -86,6 +90,22 @@ class Data: # save and read data
         return fernet.decrypt(value.encode()).decode()
     
 
+class FakeCTX:
+    def __init__(self, interaction: discord.Interaction):
+        self.interaction = interaction
+        self.guild = interaction.guild
+        self.channel = interaction.channel
+        self.author = interaction.user
+        self.bot = interaction.client
+
+    async def send(self, content):
+        if self.interaction.response.is_done():
+            await self.interaction.followup.send(content)
+        else:
+            await self.interaction.response.send_message(content, ephemeral=True)
+
+    
+
 class processing:
     @staticmethod
     async def getRolePermissonsLevel(ctx):
@@ -115,102 +135,78 @@ class processing:
 
 
     @staticmethod
-    async def start(ctx, prefix):
-        permission_levels = await Data.read(ctx, "PermissionLevels") or [0,0,0]
-
-        if permission_levels[0] <= await processing.getRolePermissonsLevel(ctx):
-
-            server = await processing.getServerSoftware(ctx) # software class ( AMP() )
-            if not server:
-                await ctx.send(f"Server not configured. Use {prefix}setup first.")
-                return
-            server_status = (await server.status(ctx)).lower()
+    async def start(ctx):
+        server = await processing.getServerSoftware(ctx) # software class ( AMP() )
+        if not server:
+            await ctx.send(f"Server not configured. Use /setup first.")
+            return
+        server_status = (await server.status(ctx)).lower()
 
             
-            if(server_status != "running" and server_status != "starting" and server_status != "restarting" and server_status != "stopping"):
-                await ctx.send(f"The server is starting now. Current state: {server_status}")
-                await server.power_action(ctx, "start")
+        if(server_status != "running" and server_status != "starting" and server_status != "restarting" and server_status != "stopping"):
+            await ctx.send(f"The server is starting now. Current state: {server_status}")
+            await server.power_action(ctx, "start")
 
-            elif(server_status == "running" or server_status == "starting" or server_status == "restarting"):
-                await ctx.send(f"The server is already {server_status}")
+        elif(server_status == "running" or server_status == "starting" or server_status == "restarting"):
+            await ctx.send(f"The server is already {server_status}")
 
-            elif(server_status == "stopping"):
-                await ctx.send("The server is stoppint, let it to that befor you start it")
+        elif(server_status == "stopping"):
+            await ctx.send("The server is stoppint, let it to that befor you start it")
 
-            else:
-                await ctx.send(f"Hopefully you never see this message: Error: Status: {server_status}")
-  
         else:
-            await ctx.send("You don't have the permission to do this")           
+            await ctx.send(f"Hopefully you never see this message: Error: Status: {server_status}")        
             
 
     @staticmethod
-    async def stop(ctx, prefix):
-        permission_levels = await Data.read(ctx, "PermissionLevels") or [0,0,0]
+    async def stop(ctx):   
+        server = await processing.getServerSoftware(ctx) # software class ( AMP() )
+        if not server:
+            await ctx.send(f"Server not configured. Use /setup first.")
+            return
+        server_status = (await server.status(ctx)).lower()
+        if(server_status == "running"):
+            await server.power_action(ctx, "stop")
+            await ctx.send(f"The server is stoping now.")
 
-        if permission_levels[1] <= await processing.getRolePermissonsLevel(ctx):
-            
-            server = await processing.getServerSoftware(ctx) # software class ( AMP() )
-            if not server:
-                await ctx.send(f"Server not configured. Use {prefix}setup first.")
-                return
-            server_status = (await server.status(ctx)).lower()
+        elif(server_status == "stopping" or server_status == "offline" or server_status == "stopped" or server_status == "crashed"):
+            await ctx.send(f"The server is already {server_status}")
 
-            if(server_status == "running"):
-                await server.power_action(ctx, "stop")
-                await ctx.send(f"The server is stoping now.")
+        elif(server_status == "starting" or server_status == "restarting"):
+            await ctx.send(f"The server is {server_status}, let it to that befor you start it")
 
-            elif(server_status == "stopping" or server_status == "offline" or server_status == "stopped" or server_status == "crashed"):
-                await ctx.send(f"The server is already {server_status}")
+        elif(server_status == "unknown" or server_status == "failed"):
+            await ctx.send(f"The server state is {server_status} but I try to stop it")
+            await server.power_action(ctx, "stop")
 
-            elif(server_status == "starting" or server_status == "restarting"):
-                await ctx.send(f"The server is {server_status}, let it to that befor you start it")
-
-            elif(server_status == "unknown" or server_status == "failed"):
-                await ctx.send(f"The server state is {server_status} but I try to stop it")
-                await server.power_action(ctx, "stop")
-
-            else:
-                await ctx.send(f"Hopefully you never see this message: Error: Status: {server_status}")
-  
         else:
-            await ctx.send("You don't have the permission to do this")  
+            await ctx.send(f"Hopefully you never see this message: Error: Status: {server_status}")
 
 
     @staticmethod
-    async def restart(ctx, prefix):
-        permission_levels = await Data.read(ctx, "PermissionLevels") or [0,0,0]
+    async def restart(ctx):        
+        server = await processing.getServerSoftware(ctx) # software class ( AMP() )
+        if not server:
+            await ctx.send(f"Server not configured. Use /setup first.")
+            return
+        server_status = (await server.status(ctx)).lower()
+                    
+        if(server_status == "running"):
+            await server.power_action(ctx, "restart")
+            await ctx.send(f"The server is stoping now.")
+        elif(server_status == "restarting"):
+            await ctx.send(f"The server is already {server_status}")
+        elif(server_status == "starting"):
+            await ctx.send(f"The server is {server_status}, let it to that befor you start it")
 
-        if permission_levels[2] <= await processing.getRolePermissonsLevel(ctx):
-            
-            server = await processing.getServerSoftware(ctx) # software class ( AMP() )
-            if not server:
-                await ctx.send(f"Server not configured. Use {prefix}setup first.")
-                return
-            server_status = (await server.status(ctx)).lower()
-                        
-            if(server_status == "running"):
-                await server.power_action(ctx, "restart")
-                await ctx.send(f"The server is stoping now.")
+        elif(server_status == "offline" or server_status == "stopping" or server_status == "crashed"):#
+            await ctx.send(f"You can't restat the server, the status {server_status}")
 
-            elif(server_status == "restarting"):
-                await ctx.send(f"The server is already {server_status}")
+        elif(server_status == "unknown" or server_status == "failed"):
+            await ctx.send(f"The server state is {server_status} but I try to stop it")
+            await server.power_action(ctx, "stop")
 
-            elif(server_status == "starting"):
-                await ctx.send(f"The server is {server_status}, let it to that befor you start it")
-
-            elif(server_status == "offline" or server_status == "stopping" or server_status == "crashed"):#
-                await ctx.send(f"You can't restat the server, the status {server_status}")
-
-            elif(server_status == "unknown" or server_status == "failed"):
-                await ctx.send(f"The server state is {server_status} but I try to stop it")
-                await server.power_action(ctx, "stop")
-
-            else:
-                await ctx.send(f"Hopefully you never see this message: Error: Status: {server_status}")
-  
         else:
-            await ctx.send("You don't have the permission to do this")
+            await ctx.send(f"Hopefully you never see this message: Error: Status: {server_status}")
                 
 
 class ServerInterface:
@@ -326,4 +322,6 @@ class AMP(ServerInterface):
         async with aiohttp.ClientSession() as session:
             async with session.post(f"{API_URL}/servers/{Server_ID}/{action}", headers=headers) as resp:
                 return await resp.text()
+
+
 
