@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 
 import aiohttp
+import asyncio
 from cryptography.fernet import Fernet
 import json
 import discord
@@ -27,12 +28,25 @@ class Data: # save and read data
     async def _get_channel(ctx):
         for channel in ctx.guild.text_channels:
             if channel.name == Data.Channel_name:
-                return channel
+               return channel
 
-        # Channel does not exists → create
+        # Permission Overwrites
+        overwrites = {
+            ctx.guild.default_role: discord.PermissionOverwrite(
+                view_channel=False
+            ),
+            ctx.guild.me: discord.PermissionOverwrite(
+                view_channel=True,
+                read_messages=True,
+                send_messages=True,
+                manage_messages=True
+            )
+        }
+
         return await ctx.guild.create_text_channel(
             Data.Channel_name,
-            reason="Bot needs a data storage"
+            overwrites=overwrites,
+            reason="MCserControll needs a private data storage channel"
         )
 
     @staticmethod
@@ -128,7 +142,11 @@ class processing:
         elif(Software == "multicraft"):
             return Multicraft()
         elif(Software == "amp"):
-            return AMP()  
+            return AMP()
+        elif(Software == "craftycontroller"):
+            return CraftyController()
+        elif(Software == "pufferpanel"):
+            return PufferPanel()
         else:
             return None
  
@@ -322,3 +340,79 @@ class AMP(ServerInterface):
         async with aiohttp.ClientSession() as session:
             async with session.post(f"{API_URL}/servers/{Server_ID}/{action}", headers=headers) as resp:
                 return await resp.text()
+
+
+class CraftyController:
+    @staticmethod
+    async def power_action(ctx, action):
+        API_Login = await Data.read(ctx, "API_Login")
+        if not API_Login:
+            return "not_configured"
+        API_URL, Server_ID, API_key = API_Login
+
+        async with aiohttp.ClientSession(
+            headers={"Authorization": f"Bearer {API_key}"}
+        ) as session:
+            async with session.post(
+                f"{API_URL}/servers/{Server_ID}/action/{action}"
+            ) as resp:
+                return resp.status == 200 
+    
+    @staticmethod
+    async def server_status(ctx):
+        API_Login = await Data.read(ctx, "API_Login")
+        if not API_Login:
+            return "not_configured"
+        API_URL, Server_ID, API_key = API_Login
+
+        async with aiohttp.ClientSession(
+            headers={"Authorization": f"Bearer {API_key}"}
+        ) as session:
+            async with session.get(
+                f"{API_URL}/servers/{Server_ID}/stats"
+            ) as resp:
+                data = await resp.json()
+                status = data.get("running", False)
+                if(status == True):
+                    return "running"
+                elif(status == False):
+                    return "offline"
+                else:
+                    return "unknown"
+                
+
+class PufferPanel:
+    @staticmethod
+    async def power_action(ctx, action):
+        API_Login = await Data.read(ctx, "API_Login")
+        if not API_Login:
+            return "not_configured"
+        API_URL, Server_ID, API_key = API_Login
+
+        HEADERS = {
+        "Authorization": f"Bearer {API_key}",
+        "Content-Type": "application/json"
+        }
+
+        async with aiohttp.ClientSession(headers=HEADERS) as session:
+            async with session.post(
+                f"{API_URL}/servers/{Server_ID}/{action}"
+            ) as resp:
+                return resp.status == 204
+            
+    @staticmethod
+    async def get_status(ctx):
+        API_Login = await Data.read(ctx, "API_Login")
+        if not API_Login:
+            return "not_configured"
+        API_URL, Server_ID, API_key = API_Login
+
+        HEADERS = {
+        "Authorization": f"Bearer {API_key}",
+        "Content-Type": "application/json"
+        }
+
+        async with aiohttp.ClientSession(headers=HEADERS) as session:
+            async with session.get(f"{API_URL}/servers/{Server_ID}") as resp:
+               data = await resp.json()
+               return data["status"]
