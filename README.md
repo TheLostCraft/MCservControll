@@ -24,23 +24,23 @@ Please let me know your suggestions for improvement. 💬
 
 #
 # Install
-You need:
+### You need:
 
 Python 3.11.9,
 
 Discord bot Token
 
-Install 'discord.py' 'cryptography' 'aiohttp' with:
+### Install 'discord.py' 'cryptography' 'aiohttp' with:
 
 pip install discord.py cryptography aiohttp
 
 Then copy your discord bot token in 'token.txt'.
 
-After that run the 'encryption_setup_start.bat' (Windos) file or 'encryption_setup_start.sh' (Linux) file to craete a encryption key.
+### After that run the 'encryption_setup_start.bat' (Windos) file or 'encryption_setup_start.sh' (Linux) file to craete a encryption key.
 
 Now you are ready to start the discord bot.
 
-To start it run the 'start.bat' (Windos) file or 'start.sh' (Linux)
+### To start it run the 'start.bat' (Windos) file or 'start.sh' (Linux)
 
 #
 # Supported Software
