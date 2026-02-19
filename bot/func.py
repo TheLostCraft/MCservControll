@@ -105,18 +105,25 @@ class Data: # save and read data
     
 
 class FakeCTX:
-    def __init__(self, interaction: discord.Interaction):
-        self.interaction = interaction
-        self.guild = interaction.guild
-        self.channel = interaction.channel
-        self.author = interaction.user
-        self.bot = interaction.client
+    class FakeCTX:
+        def __init__(self, interaction: discord.Interaction):
+            self.interaction = interaction
+            self.guild = interaction.guild
+            self.channel = interaction.channel
+            self.author = interaction.user
+            self.bot = interaction.client
+            self._deferred = False
 
-    async def send(self, content):
-        if self.interaction.response.is_done():
-            await self.interaction.followup.send(content)
-        else:
-            await self.interaction.response.send_message(content, ephemeral=True)
+        async def send(self, content: str, ephemeral: bool = True):
+            # Wenn noch nicht deferred → sofort deferen
+            if not self._deferred:
+                try:
+                    await self.interaction.response.defer(ephemeral=ephemeral)
+                    self._deferred = True
+                except Exception:
+                    pass
+
+            await self.interaction.followup.send(content, ephemeral=ephemeral)
 
     
 
@@ -416,3 +423,4 @@ class PufferPanel:
             async with session.get(f"{API_URL}/servers/{Server_ID}") as resp:
                data = await resp.json()
                return data["status"]
+
