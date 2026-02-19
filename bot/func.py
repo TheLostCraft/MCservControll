@@ -359,7 +359,7 @@ class CraftyController:
                 return resp.status == 200 
     
     @staticmethod
-    async def server_status(ctx):
+    async def status(ctx):
         API_Login = await Data.read(ctx, "API_Login")
         if not API_Login:
             return "not_configured"
@@ -401,7 +401,7 @@ class PufferPanel:
                 return resp.status == 204
             
     @staticmethod
-    async def get_status(ctx):
+    async def status(ctx):
         API_Login = await Data.read(ctx, "API_Login")
         if not API_Login:
             return "not_configured"
