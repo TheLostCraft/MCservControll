@@ -4,10 +4,11 @@ from discord.ext import commands
 
 from func import Data
 from func import processing, FakeCTX
-from func import Pterodactyl, Multicraft, AMP
+from func import Pterodactyl, Multicraft, AMP, CraftyController, PufferPanel
 
 from cryptography.fernet import Fernet
 import os
+import aiohttp
 import asyncio
 import json
 
@@ -28,16 +29,28 @@ async def on_ready():
     await bot.tree.sync()
 
 @bot.tree.command(name="setup", description="setup the discord bot")
-@app_commands.describe(software_typ="What software do you use", panel_url="Your panel/api url", server_id="Your sever id", api_key="Your API key")
-async def setup(interaction: discord.Interaction, software_typ: str, panel_url: str, server_id: str, api_key: str):
+@app_commands.choices(software=[
+    app_commands.Choice(name="Pterodactyl", value="pterodactyl"),
+    app_commands.Choice(name="Multicraft", value="multicraft"),
+    app_commands.Choice(name="AMP", value="amp"),
+    app_commands.Choice(name="CraftyController", value="craftycontroller"),
+    app_commands.Choice(name="PufferPanel", value="pufferpanel"),
+])
+async def rolecommandpermission(
+    interaction: discord.Interaction,
+    software: app_commands.Choice[str],
+    api_panel_url: str,
+    server_id: str,
+    api_key: str
+):
     if not interaction.user.guild_permissions.administrator:
         await interaction.response.send_message( "Only administrators can use this command.", ephemeral=True)
         return
 
-    API_Login = [panel_url, server_id, api_key]
+    API_Login = [api_panel_url, server_id, api_key]
     ctx = FakeCTX(interaction)
 
-    await Data.write(ctx, "SoftwareTyp", software_typ.lower())
+    await Data.write(ctx, "SoftwareTyp", software.lower())
     await Data.write(ctx, "API_Login", API_Login)
     await interaction.response.send_message("Your data has been saved", ephemeral=True)
 
@@ -68,7 +81,7 @@ async def rolepermission(interaction: discord.Interaction, role: discord.Role, p
     app_commands.Choice(name="RolePermission", value="rolepermission"),
     app_commands.Choice(name="RoleCommandPermission", value="rolecommandpermission"),
 ])
-async def RoleCommandPermission(
+async def rolecommandpermission(
     interaction: discord.Interaction,
     command: app_commands.Choice[str],
     permissionlevel: int
