@@ -7,7 +7,10 @@ import asyncio
 from cryptography.fernet import Fernet
 import json
 import discord
+from datetime import datetime
+import pytz
 
+print()
 
 with open("encrypt_key.txt", "r") as file:
       MASTER_KEY = file.read().strip()
@@ -22,18 +25,25 @@ class Data: # save and read data
     # PermissionRoleLevels |
     # PermissionRoleIDs    |
 
-    Channel_name = "bot-data-x284m"
+    "bot-data-x284m"
 
     @staticmethod
-    async def _get_channel(ctx):
+    async def _get_channel(ctx, name):
+        # look that the channel exsits
         for channel in ctx.guild.text_channels:
-            if channel.name == Data.Channel_name:
+            if channel.name == name:
                return channel
+            
+        category_name = "MCservControll-Systhem"
+        category = discord.utils.get(ctx.guild.categories, name=category_name)
 
         # Permission Overwrites
         overwrites = {
             ctx.guild.default_role: discord.PermissionOverwrite(
-                view_channel=False
+                view_channel=False,
+                read_messages=False,
+                send_messages=False,
+                manage_messages=False
             ),
             ctx.guild.me: discord.PermissionOverwrite(
                 view_channel=True,
@@ -43,9 +53,27 @@ class Data: # save and read data
             )
         }
 
+        for role in ctx.guild.roles:
+            if role.permissions.administrator:
+                overwrites[role] = discord.PermissionOverwrite(
+                    view_channel=True,
+                    send_messages=True,
+                    read_messages=True
+                )
+
+        # Create category
+        if category is None:
+            category = await ctx.guild.create_category(
+                category_name,
+                overwrites=overwrites,
+                reason="Category for MCservControll channels"
+            )
+        
+        # Create text-channel
         return await ctx.guild.create_text_channel(
-            Data.Channel_name,
+            name,
             overwrites=overwrites,
+            category=category,
             reason="MCserControll needs a private data storage channel"
         )
 
@@ -59,7 +87,7 @@ class Data: # save and read data
 
     @staticmethod
     async def read(ctx, key):
-        channel = await Data._get_channel(ctx)
+        channel = await Data._get_channel(ctx, "bot-data-x284m")
         msg = await Data._get_message(channel)
 
         if not msg:
@@ -74,7 +102,7 @@ class Data: # save and read data
 
     @staticmethod
     async def write(ctx, key, value):
-        channel = await Data._get_channel(ctx)
+        channel = await Data._get_channel(ctx, "bot-data-x284m")
         msg = await Data._get_message(channel)
 
         if msg:
@@ -105,29 +133,36 @@ class Data: # save and read data
     
 
 class FakeCTX:
-    class FakeCTX:
-        def __init__(self, interaction: discord.Interaction):
-            self.interaction = interaction
-            self.guild = interaction.guild
-            self.channel = interaction.channel
-            self.author = interaction.user
-            self.bot = interaction.client
-            self._deferred = False
+    def __init__(self, interaction: discord.Interaction):
+        self.interaction = interaction
+        self.guild = interaction.guild
+        self.channel = interaction.channel
+        self.author = interaction.user
+        self.bot = interaction.client
+        self._deferred = False
 
-        async def send(self, content: str, ephemeral: bool = True):
-            # Wenn noch nicht deferred → sofort deferen
-            if not self._deferred:
-                try:
-                    await self.interaction.response.defer(ephemeral=ephemeral)
-                    self._deferred = True
-                except Exception:
-                    pass
+    async def send(self, content: str, ephemeral: bool = True):
+        if not self._deferred:
+            try:
+                await self.interaction.response.defer(ephemeral=ephemeral)
+                self._deferred = True
+            except Exception:
+                pass
 
-            await self.interaction.followup.send(content, ephemeral=ephemeral)
+        await self.interaction.followup.send(content, ephemeral=ephemeral)
 
     
 
 class processing:
+    @staticmethod
+    async def UpdateAnnouncement(ctx,user, action):
+        utc_zone = pytz.timezone("Etc/UTC")  # neutral, always 0 UTC
+        now = datetime.now(utc_zone)
+
+        channel = await Data._get_channel(ctx, "logs")
+
+        await channel.send(f"{now.strftime('%d.%m.%Y | %H:%M:%S')} :{user}: {action}")
+
     @staticmethod
     async def getRolePermissonsLevel(ctx):
         Permissions = await Data.read(ctx, "Permissions") or {}
@@ -423,4 +458,5 @@ class PufferPanel:
             async with session.get(f"{API_URL}/servers/{Server_ID}") as resp:
                data = await resp.json()
                return data["status"]
+
 
