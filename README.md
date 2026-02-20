@@ -30,7 +30,7 @@ Python 3.11.9,
 
 Discord bot Token
 
-### Install 'discord.py' 'cryptography' 'aiohttp' with:
+### Install 'discord.py' 'cryptography' 'aiohttp' via terminal with:
 
 pip install discord.py cryptography aiohttp
 
