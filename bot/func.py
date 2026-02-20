@@ -21,7 +21,7 @@ class Data: # save and read data
     # TYPs :
     # SoftwareTyp          | pterodactyl, multicraft, amp
     # API_Login            | Pterodactly = [Panel_URL, Server_ID, API_key]; multicraft, AMP = [API_URL, Server_ID, API_key]
-    # PermissionLevels     | Wo can do what. [start, stop, restart, RolePermission, RoleCommandPermission]
+    # PermissionLevels     | Wo can do what. [start, stop, restart, status, RolePermission, RoleCommandPermission]
     # PermissionRoleLevels |
     # PermissionRoleIDs    |
 
@@ -155,13 +155,13 @@ class FakeCTX:
 
 class processing:
     @staticmethod
-    async def UpdateAnnouncement(ctx,user, action):
+    async def Log(ctx,action):
         utc_zone = pytz.timezone("Etc/UTC")  # neutral, always 0 UTC
         now = datetime.now(utc_zone)
 
         channel = await Data._get_channel(ctx, "logs")
 
-        await channel.send(f"{now.strftime('%d.%m.%Y | %H:%M:%S')} :{user}: {action}")
+        await channel.send(f"{now.strftime('%d.%m.%Y | %H:%M:%S')} : {ctx.author.name}: {action}")
 
     @staticmethod
     async def getRolePermissonsLevel(ctx):
@@ -173,7 +173,6 @@ class processing:
         if levels:
             return max(levels)
         return 0 
-   
 
     @staticmethod
     async def getServerSoftware(ctx):
@@ -192,7 +191,16 @@ class processing:
         else:
             return None
  
+ 
+    @staticmethod
+    async def status(ctx):
+        server = await processing.getServerSoftware(ctx) # software class ( AMP() )
+        if not server:
+            await ctx.send(f"Server not configured. Use /setup first.")
+            return
+        server_status = await server.status(ctx).lower()
 
+        await ctx.send(f"The server status is {server_status}")
 
     @staticmethod
     async def start(ctx):
@@ -424,39 +432,3 @@ class CraftyController:
                 
 
 class PufferPanel:
-    @staticmethod
-    async def power_action(ctx, action):
-        API_Login = await Data.read(ctx, "API_Login")
-        if not API_Login:
-            return "not_configured"
-        API_URL, Server_ID, API_key = API_Login
-
-        HEADERS = {
-        "Authorization": f"Bearer {API_key}",
-        "Content-Type": "application/json"
-        }
-
-        async with aiohttp.ClientSession(headers=HEADERS) as session:
-            async with session.post(
-                f"{API_URL}/servers/{Server_ID}/{action}"
-            ) as resp:
-                return resp.status == 204
-            
-    @staticmethod
-    async def status(ctx):
-        API_Login = await Data.read(ctx, "API_Login")
-        if not API_Login:
-            return "not_configured"
-        API_URL, Server_ID, API_key = API_Login
-
-        HEADERS = {
-        "Authorization": f"Bearer {API_key}",
-        "Content-Type": "application/json"
-        }
-
-        async with aiohttp.ClientSession(headers=HEADERS) as session:
-            async with session.get(f"{API_URL}/servers/{Server_ID}") as resp:
-               data = await resp.json()
-               return data["status"]
-
-
