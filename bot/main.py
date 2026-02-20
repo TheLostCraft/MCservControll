@@ -11,6 +11,8 @@ import os
 import aiohttp
 import asyncio
 import json
+from datetime import datetime
+import pytz
 
 with open("encrypt_key.txt", "r") as file: # load the encrypton ojekt
       MASTER_KEY = file.read().strip()
@@ -36,7 +38,7 @@ async def on_ready():
     app_commands.Choice(name="CraftyController", value="craftycontroller"),
     app_commands.Choice(name="PufferPanel", value="pufferpanel"),
 ])
-async def rolecommandpermission(
+async def setup(
     interaction: discord.Interaction,
     software: app_commands.Choice[str],
     api_panel_url: str,
@@ -50,9 +52,10 @@ async def rolecommandpermission(
     API_Login = [api_panel_url, server_id, api_key]
     ctx = FakeCTX(interaction)
 
-    await Data.write(ctx, "SoftwareTyp", software.lower())
+    await Data.write(ctx, "SoftwareTyp", software.value)
     await Data.write(ctx, "API_Login", API_Login)
     await interaction.response.send_message("Your data has been saved", ephemeral=True)
+    await processing.log(ctx, "/setup")
 
 
 @bot.tree.command(name="rolepermission", description="set the role permission level")
@@ -61,7 +64,7 @@ async def rolepermission(interaction: discord.Interaction, role: discord.Role, p
     ctx = FakeCTX(interaction)
 
     permission_levels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
-    if permission_levels[3] <= await processing.getRolePermissonsLevel(ctx):
+    if permission_levels[4] <= await processing.getRolePermissonsLevel(ctx):
 
         Permissions = await Data.read(ctx, "Permissions") or {}
 
@@ -69,6 +72,7 @@ async def rolepermission(interaction: discord.Interaction, role: discord.Role, p
         await Data.write(ctx, "Permissions", Permissions)
 
         await interaction.response.send_message(f"Role '{role.name}' has now a permission level of {permissionlevel}", ephemeral=True)
+        await processing.log(ctx, f"/rolepermission: {role.name} == {permissionlevel}")
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
@@ -78,6 +82,7 @@ async def rolepermission(interaction: discord.Interaction, role: discord.Role, p
     app_commands.Choice(name="Start", value="start"),
     app_commands.Choice(name="Stop", value="stop"),
     app_commands.Choice(name="Restart", value="restart"),
+    app_commands.Choice(name="Status", value="status"),
     app_commands.Choice(name="RolePermission", value="rolepermission"),
     app_commands.Choice(name="RoleCommandPermission", value="rolecommandpermission"),
 ])
@@ -88,7 +93,7 @@ async def rolecommandpermission(
 ):
     ctx = FakeCTX(interaction)
     PermissionLevels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
-    if PermissionLevels[4] <= await processing.getRolePermissonsLevel(ctx):
+    if PermissionLevels[5] <= await processing.getRolePermissonsLevel(ctx):
         
         if(command.value == "start"):
             PermissionLevels[0] = permissionlevel
@@ -99,16 +104,20 @@ async def rolecommandpermission(
         elif(command.value == "restart"):
             PermissionLevels[2] = permissionlevel
             await Data.write(ctx, "PermissionLevels", PermissionLevels)
+        elif(command.value == "status"):
+            PermissionLevels[4] = permissionlevel
+            await Data.write(ctx, "PermissionLevels", PermissionLevels) 
         elif(command.value == "rolepermission"):
-            PermissionLevels[3] = permissionlevel
+            PermissionLevels[4] = permissionlevel
             await Data.write(ctx, "PermissionLevels", PermissionLevels)
         elif(command.value == "rolecommandpermission"):
-            PermissionLevels[4] = permissionlevel
+            PermissionLevels[5] = permissionlevel
             await Data.write(ctx, "PermissionLevels", PermissionLevels)
         else:
            return 
     
-        await interaction.response.send_message(f"The command /{command.value} needs now a permission level of {permissionlevel}", ephemeral=True)
+        await interaction.response.send_message(f"The command /{command.value} needs now at least a permission level of {permissionlevel}", ephemeral=True)
+        await processing.log(ctx, f"/rolecommandpermission: /{command.value} <= {permissionlevel}")
     
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
@@ -119,6 +128,20 @@ async def rolecommandpermission(
 
 # start / stop / restart
 @bot.tree.command(name="start", description="start your server")
+async def status(interaction: discord.Interaction):
+    ctx = FakeCTX(interaction)
+
+    permission_levels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
+    if permission_levels[3] <= await processing.getRolePermissonsLevel(ctx):
+
+        await processing.status(ctx)
+        await processing.log(ctx, "/status")
+
+    else:
+        await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
+
+
+@bot.tree.command(name="start", description="start your server")
 async def start(interaction: discord.Interaction):
     ctx = FakeCTX(interaction)
 
@@ -126,6 +149,7 @@ async def start(interaction: discord.Interaction):
     if permission_levels[0] <= await processing.getRolePermissonsLevel(ctx):
 
         await processing.start(ctx)
+        await processing.log(ctx, "/status")
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
@@ -139,6 +163,7 @@ async def stop(interaction: discord.Interaction):
     if permission_levels[1] <= await processing.getRolePermissonsLevel(ctx):
 
         await processing.stop(ctx)
+        await processing.log(ctx, "/stop")
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
@@ -152,6 +177,7 @@ async def restart(interaction: discord.Interaction):
     if permission_levels[2] <= await processing.getRolePermissonsLevel(ctx):
         
         await processing.restart(ctx)
+        await processing.log(ctx, "/restart")
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
