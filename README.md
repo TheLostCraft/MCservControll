@@ -16,6 +16,8 @@ Please let me know your suggestions for improvement. 💬
 
 /rolecommandpermission -- set the permission level needed for a command
 
+/status -- get the status of your server
+
 /start -- start your server
 
 /stop -- stop your server
