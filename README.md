@@ -40,7 +40,7 @@ Then copy your discord bot token in 'token.txt'.
 
 Now you are ready to start the discord bot.
 
-### To start it run the 'start.bat' (Windos) file or 'start.sh' (Linux)
+### To start it run the 'start.bat' (Windos) file or 'start.sh' (Linux) file
 
 #
 # Supported Software
