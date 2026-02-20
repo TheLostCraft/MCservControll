@@ -13,6 +13,7 @@ import asyncio
 import json
 from datetime import datetime
 import pytz
+import threading
 
 with open("encrypt_key.txt", "r") as file: # load the encrypton ojekt
       MASTER_KEY = file.read().strip()
@@ -127,7 +128,7 @@ async def rolecommandpermission(
 
 
 # start / stop / restart
-@bot.tree.command(name="start", description="start your server")
+@bot.tree.command(name="status", description="status of your server")
 async def status(interaction: discord.Interaction):
     ctx = FakeCTX(interaction)
 
@@ -181,7 +182,18 @@ async def restart(interaction: discord.Interaction):
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
-    
+
+# stop it via terminal
+def console_listener():
+    while True:
+        cmd = input()
+        if cmd.lower() == "stop":
+            print("The discord bot is shutting down...")
+            # Beende den Bot sauber
+            threading.Thread(target=lambda: bot.loop.create_task(bot.close())).start()
+            break
+listener_thread = threading.Thread(target=console_listener, daemon=True)
+listener_thread.start()
 
 # read the token of your discord bot and use it
 with open("token.txt", "r") as file: # token.txt content = discord bot token
