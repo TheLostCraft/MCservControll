@@ -2,8 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from func import Data
-from func import processing, FakeCTX
+from func import processing, FakeCTX, Data
 from func import Pterodactyl, Multicraft, AMP, CraftyController, PufferPanel
 
 from cryptography.fernet import Fernet
