@@ -2,7 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from func import processing, FakeCTX, Data
+from func import Data
+from func import processing, FakeCTX
 from func import Pterodactyl, Multicraft, AMP, CraftyController, PufferPanel
 
 from cryptography.fernet import Fernet
@@ -55,7 +56,7 @@ async def setup(
     await Data.write(ctx, "SoftwareTyp", software.value)
     await Data.write(ctx, "API_Login", API_Login)
     await interaction.response.send_message("Your data has been saved", ephemeral=True)
-    await processing.log(ctx, "/setup")
+    await processing.Log(ctx, "/setup")
 
 
 @bot.tree.command(name="rolepermission", description="set the role permission level")
@@ -72,7 +73,7 @@ async def rolepermission(interaction: discord.Interaction, role: discord.Role, p
         await Data.write(ctx, "Permissions", Permissions)
 
         await interaction.response.send_message(f"Role '{role.name}' has now a permission level of {permissionlevel}", ephemeral=True)
-        await processing.log(ctx, f"/rolepermission: {role.name} == {permissionlevel}")
+        await processing.Log(ctx, f"/rolepermission: {role.name} == {permissionlevel}")
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
@@ -117,7 +118,7 @@ async def rolecommandpermission(
            return 
     
         await interaction.response.send_message(f"The command /{command.value} needs now at least a permission level of {permissionlevel}", ephemeral=True)
-        await processing.log(ctx, f"/rolecommandpermission: /{command.value} <= {permissionlevel}")
+        await processing.Log(ctx, f"/rolecommandpermission: /{command.value} <= {permissionlevel}")
     
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
@@ -135,7 +136,7 @@ async def status(interaction: discord.Interaction):
     if permission_levels[3] <= await processing.getRolePermissonsLevel(ctx):
 
         await processing.status(ctx)
-        await processing.log(ctx, "/status")
+        await processing.Log(ctx, "/status")
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
@@ -149,7 +150,7 @@ async def start(interaction: discord.Interaction):
     if permission_levels[0] <= await processing.getRolePermissonsLevel(ctx):
 
         await processing.start(ctx)
-        await processing.log(ctx, "/start")
+        await processing.Log(ctx, "/start")
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
@@ -163,7 +164,7 @@ async def stop(interaction: discord.Interaction):
     if permission_levels[1] <= await processing.getRolePermissonsLevel(ctx):
 
         await processing.stop(ctx)
-        await processing.log(ctx, "/stop")
+        await processing.Log(ctx, "/stop")
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
@@ -177,7 +178,7 @@ async def restart(interaction: discord.Interaction):
     if permission_levels[2] <= await processing.getRolePermissonsLevel(ctx):
         
         await processing.restart(ctx)
-        await processing.log(ctx, "/restart")
+        await processing.Log(ctx, "/restart")
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
