@@ -430,3 +430,37 @@ class CraftyController:
                 
 
 class PufferPanel:
+    @staticmethod
+    async def power_action(ctx, action):
+        API_Login = await Data.read(ctx, "API_Login")
+        if not API_Login:
+            return "not_configured"
+        API_URL, Server_ID, API_key = API_Login
+
+        HEADERS = {
+        "Authorization": f"Bearer {API_key}",
+        "Content-Type": "application/json"
+        }
+
+        async with aiohttp.ClientSession(headers=HEADERS) as session:
+            async with session.post(
+                f"{API_URL}/servers/{Server_ID}/{action}"
+            ) as resp:
+                return resp.status == 204
+            
+    @staticmethod
+    async def status(ctx):
+        API_Login = await Data.read(ctx, "API_Login")
+        if not API_Login:
+            return "not_configured"
+        API_URL, Server_ID, API_key = API_Login
+
+        HEADERS = {
+        "Authorization": f"Bearer {API_key}",
+        "Content-Type": "application/json"
+        }
+
+        async with aiohttp.ClientSession(headers=HEADERS) as session:
+            async with session.get(f"{API_URL}/servers/{Server_ID}") as resp:
+               data = await resp.json()
+               return data["status"]
