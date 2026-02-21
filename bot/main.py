@@ -135,7 +135,11 @@ async def status(interaction: discord.Interaction):
     permission_levels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
     if permission_levels[3] <= await processing.getRolePermissonsLevel(ctx):
 
-        await processing.status(ctx)
+        try: await processing.status(ctx)
+        except: 
+            await processing.Log(ctx, "/status: failed")
+            return
+            
         await processing.Log(ctx, "/status")
 
     else:
@@ -149,8 +153,12 @@ async def start(interaction: discord.Interaction):
     permission_levels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
     if permission_levels[0] <= await processing.getRolePermissonsLevel(ctx):
 
-        await processing.start(ctx)
-        await processing.Log(ctx, "/start")
+        try: await processing.start(ctx)
+        except: 
+            await processing.Log(ctx, "/start: failed")
+            return
+        
+        await processing.Log(ctx, "/start: successful")
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
@@ -163,8 +171,12 @@ async def stop(interaction: discord.Interaction):
     permission_levels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
     if permission_levels[1] <= await processing.getRolePermissonsLevel(ctx):
 
-        await processing.stop(ctx)
-        await processing.Log(ctx, "/stop")
+        try: await processing.stop(ctx)
+        except:
+            await processing.Log(ctx, "/status: failed")
+            return
+        
+        await processing.Log(ctx, "/status")
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
@@ -177,8 +189,10 @@ async def restart(interaction: discord.Interaction):
     permission_levels = await Data.read(ctx, "PermissionLevels") or PermissionLevelsFallSave
     if permission_levels[2] <= await processing.getRolePermissonsLevel(ctx):
         
-        await processing.restart(ctx)
-        await processing.Log(ctx, "/restart")
+        try: await processing.restart(ctx)
+        except:
+            await processing.Log(ctx, "/restart: failed")
+        await processing.Log(ctx, "/restart: successful")
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
