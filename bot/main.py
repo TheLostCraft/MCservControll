@@ -19,7 +19,7 @@ with open("encrypt_key.txt", "r") as file: # load the encrypton ojekt
       MASTER_KEY = file.read().strip()
 fernet = Fernet(MASTER_KEY.encode())
 
-PermissionLevelsFallSave = [0,0,0,0,0]
+PermissionLevelsFallSave = [0,0,0,0,0,0]
 
 class MyBot(commands.Bot):
     def __init__(self):
@@ -150,7 +150,7 @@ async def start(interaction: discord.Interaction):
     if permission_levels[0] <= await processing.getRolePermissonsLevel(ctx):
 
         await processing.start(ctx)
-        await processing.log(ctx, "/status")
+        await processing.log(ctx, "/start")
 
     else:
         await interaction.response.send_message("You do not the permission to do that", ephemeral=True)
