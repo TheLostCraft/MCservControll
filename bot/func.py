@@ -10,8 +10,6 @@ import discord
 from datetime import datetime
 import pytz
 
-print()
-
 with open("encrypt_key.txt", "r") as file:
       MASTER_KEY = file.read().strip()
 fernet = Fernet(MASTER_KEY.encode())
@@ -198,7 +196,7 @@ class processing:
         if not server:
             await ctx.send(f"Server not configured. Use /setup first.")
             return
-        server_status = await server.status(ctx).lower()
+        server_status = (await server.status(ctx)).lower()
 
         await ctx.send(f"The server status is {server_status}")
 
