@@ -32,7 +32,7 @@ class Data: # save and read data
             if channel.name == name:
                return channel
             
-        category_name = "MCservControll-Systhem"
+        category_name = "MCservControll-System"
         category = discord.utils.get(ctx.guild.categories, name=category_name)
 
         # Permission Overwrites
@@ -464,3 +464,4 @@ class PufferPanel:
             async with session.get(f"{API_URL}/servers/{Server_ID}") as resp:
                data = await resp.json()
                return data["status"]
+
